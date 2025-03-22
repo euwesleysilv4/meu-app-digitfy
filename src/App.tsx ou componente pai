@@ -1,0 +1,31 @@
+import React, { useState } from 'react';
+import Sidebar from './components/Sidebar';
+import NewsFeed from './components/NewsFeed'; // Moveremos para um componente
+
+function App() {
+  const [activeSection, setActiveSection] = useState<string>('home');
+
+  const renderContent = () => {
+    switch(activeSection) {
+      case 'news-feed':
+        return <NewsFeed />;
+      // Outros casos para diferentes seções
+      default:
+        return <HomePage />; // Sua página inicial
+    }
+  };
+
+  return (
+    <div className="flex">
+      <Sidebar 
+        activeSection={activeSection} 
+        setActiveSection={setActiveSection} 
+      />
+      <main className="flex-grow">
+        {renderContent()}
+      </main>
+    </div>
+  );
+}
+
+export default App; 

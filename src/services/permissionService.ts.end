@@ -1,0 +1,124 @@
+﻿  sendAffiliateData: 'Atualize para o plano Member para enviar dados de afiliados.'
+};
+
+/**
+ * Hook para gerenciar permissÃµes de recursos com base no plano do usuÃ¡rio
+ */
+export const usePermissions = () => {
+  const { profile } = useAuth();
+  const currentPlan = profile?.plano || 'gratuito';
+  
+  // Retorna memoizado para evitar recriaÃ§Ã£o em cada renderizaÃ§Ã£o
+  return useMemo(() => {
+    // Verifica se o usuÃ¡rio tem acesso a um recurso especÃ­fico usando o mapa de permissÃµes
+    const hasFeatureAccessByMap = (featureKey: FeatureKey): boolean => {
+      return featurePermissions[currentPlan][featureKey];
+    };
+    
+    // Verifica se o usuÃ¡rio tem acesso a um recurso especÃ­fico usando minimumPlans
+    const hasFeatureAccess = (featureKey: FeatureKey): boolean => {
+      const requiredPlan = minimumPlans[featureKey];
+      return hasMinimumPlan(requiredPlan);
+    };
+    
+    // Verifica se o usuÃ¡rio tem um plano mÃ­nimo necessÃ¡rio
+    const hasMinimumPlan = (requiredPlan: UserPlan): boolean => {
+      const planOrder: UserPlan[] = ['gratuito', 'member', 'pro', 'elite'];
+      const currentPlanIndex = planOrder.indexOf(currentPlan);
+      const requiredPlanIndex = planOrder.indexOf(requiredPlan);
+      
+      return currentPlanIndex >= requiredPlanIndex;
+    };
+    
+    // ObtÃ©m a mensagem de upgrade para um recurso
+    const getUpgradeMessage = (featureKey: FeatureKey): string => {
+      if (hasFeatureAccess(featureKey)) {
+        return 'Este recurso jÃ¡ estÃ¡ disponÃ­vel no seu plano atual.';
+      }
+      return upgradeMessages[featureKey];
+    };
+    
+    // ObtÃ©m o plano atual do usuÃ¡rio
+    const getCurrentPlan = (): UserPlan => {
+      return currentPlan;
+    };
+    
+    // ObtÃ©m o limite de downloads do usuÃ¡rio
+    const getDownloadLimit = (): number => {
+      return downloadLimits[currentPlan];
+    };
+    
+    // ObtÃ©m o limite de Ã¡udios do Trend Rush por dia
+    const getTrendRushLimit = (): number => {
+      return trendRushLimits[currentPlan];
+    };
+    
+    // Verifica se o usuÃ¡rio tem downloads ilimitados
+    const hasUnlimitedDownloads = (): boolean => {
+      return downloadLimits[currentPlan] === -1;
+    };
+    
+    // Verifica se o usuÃ¡rio tem limite ilimitado no Trend Rush
+    const hasUnlimitedTrendRush = (): boolean => {
+      return trendRushLimits[currentPlan] === -1;
+    };
+    
+    // ObtÃ©m mensagem personalizada de upgrade para o usuÃ¡rio
+    const getUserUpgradeMessage = (): string => {
+      switch (currentPlan) {
+        case 'gratuito':
+          return 'Atualize para o plano Member e tenha acesso a mais recursos!';
+        case 'member':
+          return 'Atualize para o plano Pro e eleve seu potencial como afiliado!';
+        case 'pro':
+          return 'Atualize para o plano Elite e tenha acesso a todos os recursos!';
+        case 'elite':
+          return 'VocÃª jÃ¡ possui o melhor plano disponÃ­vel!';
+        default:
+          return 'Atualize seu plano para desbloquear mais recursos!';
+      }
+    };
+    
+    // ObtÃ©m todos os recursos disponÃ­veis no plano atual
+    const getAvailableFeatures = (): FeatureKey[] => {
+      return Object.entries(minimumPlans)
+        .filter(([key]) => hasFeatureAccess(key as FeatureKey))
+        .map(([key]) => key as FeatureKey);
+    };
+    
+    return {
+      hasFeatureAccess,
+      hasFeatureAccessByMap,
+      hasMinimumPlan,
+      getUpgradeMessage,
+      getCurrentPlan,
+      getDownloadLimit,
+      getTrendRushLimit,
+      hasUnlimitedDownloads,
+      hasUnlimitedTrendRush,
+      getUserUpgradeMessage,
+      getAvailableFeatures
+    };
+  }, [currentPlan]);
+};
+
+// TambÃ©m exportar uma versÃ£o nÃ£o-hook para componentes classe ou contextos
+export const hasFeatureAccess = (plan: UserPlan, featureKey: FeatureKey): boolean => {
+  const requiredPlan = minimumPlans[featureKey];
+  const planOrder: UserPlan[] = ['gratuito', 'member', 'pro', 'elite'];
+  const currentPlanIndex = planOrder.indexOf(plan);
+  const requiredPlanIndex = planOrder.indexOf(requiredPlan);
+  
+  return currentPlanIndex >= requiredPlanIndex;
+};
+
+export const getFeatureName = (featureKey: FeatureKey): string => {
+  return featureNames[featureKey];
+};
+
+export const getUpgradeMessage = (currentPlan: UserPlan, featureKey: FeatureKey): string => {
+  if (hasFeatureAccess(currentPlan, featureKey)) {
+    return 'Este recurso jÃ¡ estÃ¡ disponÃ­vel no seu plano atual.';
+  }
+  return upgradeMessages[featureKey];
+}; 

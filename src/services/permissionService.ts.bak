@@ -1,0 +1,619 @@
+import { useMemo } from 'react';
+import { UserPlan } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+
+// Tipos para chaves de recursos
+export type FeatureKey = 
+  // Ferramentas
+  | 'whatsappGenerator'
+  | 'socialProofGenerator' 
+  | 'profileStructureGenerator'
+  | 'hashtagGenerator'
+  | 'persuasiveCopyGenerator'
+  | 'customCreatives'
+  | 'ltvFunnel'
+  | 'usefulSites'
+  | 'notificationSimulator'
+  | 'platformComparison'
+  | 'trendRush'
+  | 'digitalGames'
+  | 'storytellingGenerator'
+  | 'orderBumpGenerator'
+  // Comunidade
+  | 'whatsappGroups'
+  | 'discordServers'
+  | 'promoteCommunity'
+  | 'telegramChannels'
+  // Aprendizado
+  | 'freeCourses'
+  | 'relevantContent'
+  | 'ebooks'
+  | 'mindMaps'
+  | 'salesStrategy'
+  | 'profileStructure'
+  | 'freePacks'
+  | 'learningChallenges'
+  | 'publishLearningContent'
+  // Afiliados
+  | 'topAffiliates'
+  | 'bestSellers'
+  | 'mostAffiliates'
+  | 'mostComplete'
+  | 'testimonials'
+  | 'sendAffiliateData'
+  // Serviços de Marketing Digital
+  | 'viewServices'
+  | 'contractServices'  
+  | 'viewServiceRequests'
+  | 'promoteServices'
+  | 'requestServices'
+  // Outras áreas
+  | 'homepage'
+  | 'upgradePage'
+  | 'newsSection'
+  | 'helpCenter'
+  | 'referralProgram'
+  | 'recommendedSection'
+  | 'linksSection'
+  // Limites e Suporte
+  | 'maxDownloads'
+  | 'accessToSupport'
+  | 'customizationOptions'
+  | 'trendRushLimit';
+
+// Nome amigável para cada feature
+export const featureNames: Record<FeatureKey, string> = {
+  // Ferramentas
+  whatsappGenerator: 'Gerador de Links WhatsApp',
+  socialProofGenerator: 'Gerador de Provas Sociais',
+  profileStructureGenerator: 'Gerador de Estrutura de Perfil',
+  hashtagGenerator: 'Gerador de Hashtags',
+  persuasiveCopyGenerator: 'Gerador de Textos Persuasivos',
+  customCreatives: 'Criativos Personalizados',
+  ltvFunnel: 'Funil LTV',
+  usefulSites: 'Sites Úteis',
+  notificationSimulator: 'Simulador de Notificações',
+  platformComparison: 'Comparação de Plataformas',
+  trendRush: 'Análise de Tendências',
+  digitalGames: 'Jogos Digitais',
+  storytellingGenerator: 'Gerador de Storytelling',
+  orderBumpGenerator: 'Gerador de Order Bump',
+  // Comunidade
+  whatsappGroups: 'Grupos de WhatsApp',
+  discordServers: 'Servidores no Discord',
+  promoteCommunity: 'Promoção na Comunidade',
+  telegramChannels: 'Canais no Telegram',
+  // Aprendizado
+  freeCourses: 'Cursos Gratuitos',
+  relevantContent: 'Conteúdos Relevantes',
+  ebooks: 'E-books e PDFs',
+  mindMaps: 'Mapas Mentais',
+  salesStrategy: 'Estratégias de Vendas',
+  profileStructure: 'Estrutura de Perfil',
+  freePacks: 'Pacotes Gratuitos',
+  learningChallenges: 'Desafios de Aprendizado',
+  publishLearningContent: 'Publicar Conteúdo de Aprendizado',
+  // Afiliados
+  topAffiliates: 'Top Afiliados',
+  bestSellers: 'Mais Vendidos',
+  mostAffiliates: 'Mais Afiliados',
+  mostComplete: 'Mais Completos',
+  testimonials: 'Depoimentos',
+  sendAffiliateData: 'Enviar Dados de Afiliado',
+  // Serviços de Marketing Digital
+  viewServices: 'Visualizar Profissionais Disponíveis',
+  contractServices: 'Contratar Serviços',
+  viewServiceRequests: 'Visualizar Solicitações de Serviços',
+  promoteServices: 'Divulgar Serviços',
+  requestServices: 'Solicitar Serviços',
+  // Outras áreas
+  homepage: 'Tela Inicial',
+  upgradePage: 'Página de Upgrade',
+  newsSection: 'Seção de Novidades',
+  helpCenter: 'Central de Ajuda',
+  referralProgram: 'Indique e Ganhe',
+  recommendedSection: 'Seção Recomendados',
+  linksSection: 'Seção de Links',
+  // Limites específicos
+  trendRushLimit: 'Limite de Áudios no Trend Rush',
+  // Limites e Suporte
+  maxDownloads: 'Limite de Downloads',
+  accessToSupport: 'Acesso ao Suporte',
+  customizationOptions: 'Opções de Personalização'
+};
+
+// Mapeamento de permissões de recursos por plano
+export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> = {
+  gratuito: {
+    // Ferramentas - Todas disponíveis
+    whatsappGenerator: true,
+    socialProofGenerator: true,
+    profileStructureGenerator: true,
+    hashtagGenerator: true,
+    persuasiveCopyGenerator: true,
+    customCreatives: true,
+    ltvFunnel: true,
+    usefulSites: true,
+    notificationSimulator: true,
+    platformComparison: true,
+    trendRush: true,
+    digitalGames: true,
+    storytellingGenerator: true,
+    orderBumpGenerator: true,
+    // Comunidade - Todas disponíveis exceto promoteCommunity
+    whatsappGroups: true,
+    discordServers: true,
+    promoteCommunity: false,
+    telegramChannels: true,
+    // Aprendizado - Todas disponíveis
+    freeCourses: true,
+    relevantContent: true,
+    ebooks: true,
+    mindMaps: true,
+    salesStrategy: true,
+    profileStructure: true,
+    freePacks: true,
+    learningChallenges: true,
+    publishLearningContent: true,
+    // Afiliados - Todas disponíveis
+    topAffiliates: true,
+    bestSellers: true,
+    mostAffiliates: true,
+    mostComplete: true,
+    testimonials: true,
+    sendAffiliateData: true,
+    // Serviços de Marketing Digital - Limitado conforme pedido
+    viewServices: true,
+    contractServices: true,
+    viewServiceRequests: false,
+    promoteServices: false,
+    requestServices: true,
+    // Outras áreas - Todas disponíveis
+    homepage: true,
+    upgradePage: true,
+    newsSection: true,
+    helpCenter: true,
+    referralProgram: true,
+    recommendedSection: true,
+    linksSection: true,
+    // Limites e Suporte
+    maxDownloads: true,
+    accessToSupport: false,
+    customizationOptions: false,
+    trendRushLimit: true
+  },
+  member: {
+    // Ferramentas
+    whatsappGenerator: true,
+    socialProofGenerator: true,
+    profileStructureGenerator: true,
+    hashtagGenerator: true,
+    persuasiveCopyGenerator: true,
+    customCreatives: false,
+    ltvFunnel: false,
+    usefulSites: true,
+    notificationSimulator: true,
+    platformComparison: true,
+    trendRush: false,
+    digitalGames: true,
+    storytellingGenerator: false,
+    orderBumpGenerator: false,
+    // Comunidade
+    whatsappGroups: true,
+    discordServers: true,
+    promoteCommunity: false,
+    telegramChannels: false,
+    // Aprendizado
+    freeCourses: true,
+    relevantContent: true,
+    ebooks: true,
+    mindMaps: false,
+    salesStrategy: true,
+    profileStructure: true,
+    freePacks: true,
+    learningChallenges: false,
+    publishLearningContent: true,
+    // Afiliados
+    topAffiliates: true,
+    bestSellers: true,
+    mostAffiliates: true,
+    mostComplete: false,
+    testimonials: true,
+    sendAffiliateData: true,
+    // Serviços de Marketing Digital
+    viewServices: true,
+    contractServices: true,
+    viewServiceRequests: true,
+    promoteServices: false,
+    requestServices: true,
+    // Outras áreas
+    homepage: true,
+    upgradePage: true,
+    newsSection: true,
+    helpCenter: true,
+    referralProgram: true,
+    recommendedSection: true,
+    linksSection: true,
+    // Limites e Suporte
+    maxDownloads: true,
+    accessToSupport: true,
+    customizationOptions: false,
+    trendRushLimit: true
+  },
+  pro: {
+    // Ferramentas
+    whatsappGenerator: true,
+    socialProofGenerator: true,
+    profileStructureGenerator: true,
+    hashtagGenerator: true,
+    persuasiveCopyGenerator: true,
+    customCreatives: true,
+    ltvFunnel: true,
+    usefulSites: true,
+    notificationSimulator: true,
+    platformComparison: true,
+    trendRush: true,
+    digitalGames: true,
+    storytellingGenerator: true,
+    orderBumpGenerator: false,
+    // Comunidade
+    whatsappGroups: true,
+    discordServers: true,
+    promoteCommunity: false,
+    telegramChannels: true,
+    // Aprendizado
+    freeCourses: true,
+    relevantContent: true,
+    ebooks: true,
+    mindMaps: true,
+    salesStrategy: true,
+    profileStructure: true,
+    freePacks: true,
+    learningChallenges: true,
+    publishLearningContent: true,
+    // Afiliados
+    topAffiliates: true,
+    bestSellers: true,
+    mostAffiliates: true,
+    mostComplete: true,
+    testimonials: true,
+    sendAffiliateData: true,
+    // Serviços de Marketing Digital
+    viewServices: true,
+    contractServices: true,
+    viewServiceRequests: true,
+    promoteServices: true,
+    requestServices: true,
+    // Outras áreas
+    homepage: true,
+    upgradePage: true,
+    newsSection: true,
+    helpCenter: true,
+    referralProgram: true,
+    recommendedSection: true,
+    linksSection: true,
+    // Limites e Suporte
+    maxDownloads: true,
+    accessToSupport: true,
+    customizationOptions: true,
+    trendRushLimit: false
+  },
+  elite: {
+    // Ferramentas
+    whatsappGenerator: true,
+    socialProofGenerator: true,
+    profileStructureGenerator: true,
+    hashtagGenerator: true,
+    persuasiveCopyGenerator: true,
+    customCreatives: true,
+    ltvFunnel: true,
+    usefulSites: true,
+    notificationSimulator: true,
+    platformComparison: true,
+    trendRush: true,
+    digitalGames: true,
+    storytellingGenerator: true,
+    orderBumpGenerator: true,
+    // Comunidade
+    whatsappGroups: true,
+    discordServers: true,
+    promoteCommunity: true,
+    telegramChannels: true,
+    // Aprendizado
+    freeCourses: true,
+    relevantContent: true,
+    ebooks: true,
+    mindMaps: true,
+    salesStrategy: true,
+    profileStructure: true,
+    freePacks: true,
+    learningChallenges: true,
+    publishLearningContent: true,
+    // Afiliados
+    topAffiliates: true,
+    bestSellers: true,
+    mostAffiliates: true,
+    mostComplete: true,
+    testimonials: true,
+    sendAffiliateData: true,
+    // Serviços de Marketing Digital
+    viewServices: true,
+    contractServices: true,
+    viewServiceRequests: true,
+    promoteServices: true,
+    requestServices: true,
+    // Outras áreas
+    homepage: true,
+    upgradePage: true,
+    newsSection: true,
+    helpCenter: true,
+    referralProgram: true,
+    recommendedSection: true,
+    linksSection: true,
+    // Limites e Suporte
+    maxDownloads: true,
+    accessToSupport: true,
+    customizationOptions: true,
+    trendRushLimit: false
+  }
+};
+
+// Limites de download por plano
+export const downloadLimits: Record<UserPlan, number> = {
+  gratuito: 5,
+  member: 15,
+  pro: 50,
+  elite: -1 // -1 representa ilimitado
+};
+
+// Limites específicos do Trend Rush por plano (áudios por dia)
+export const trendRushLimits: Record<UserPlan, number> = {
+  gratuito: 5,
+  member: 10,
+  pro: 30,
+  elite: -1 // -1 representa ilimitado
+};
+
+// Plano mínimo necessário para cada recurso
+export const minimumPlans: Record<FeatureKey, UserPlan> = {
+  // Ferramentas - Todas gratuitas
+  whatsappGenerator: 'gratuito',
+  socialProofGenerator: 'gratuito',
+  profileStructureGenerator: 'gratuito',
+  hashtagGenerator: 'gratuito',
+  persuasiveCopyGenerator: 'gratuito',
+  customCreatives: 'gratuito',
+  ltvFunnel: 'gratuito',
+  usefulSites: 'gratuito',
+  notificationSimulator: 'gratuito',
+  platformComparison: 'gratuito',
+  trendRush: 'gratuito',
+  digitalGames: 'gratuito',
+  storytellingGenerator: 'gratuito',
+  orderBumpGenerator: 'gratuito',
+  // Comunidade - Todas gratuitas exceto promoteCommunity
+  whatsappGroups: 'gratuito',
+  discordServers: 'gratuito',
+  promoteCommunity: 'member',
+  telegramChannels: 'gratuito',
+  // Aprendizado - Todas gratuitas
+  freeCourses: 'gratuito',
+  relevantContent: 'gratuito',
+  ebooks: 'gratuito',
+  mindMaps: 'gratuito',
+  salesStrategy: 'gratuito',
+  profileStructure: 'gratuito',
+  freePacks: 'gratuito',
+  learningChallenges: 'gratuito',
+  publishLearningContent: 'member',
+  // Afiliados - Todas gratuitas
+  topAffiliates: 'gratuito',
+  bestSellers: 'gratuito',
+  mostAffiliates: 'gratuito',
+  mostComplete: 'gratuito',
+  testimonials: 'gratuito',
+  sendAffiliateData: 'member',
+  // Serviços de Marketing Digital - Limitado conforme pedido
+  viewServices: 'gratuito',
+  contractServices: 'gratuito',
+  viewServiceRequests: 'member', // Requer plano member
+  promoteServices: 'pro', // Requer plano pro
+  requestServices: 'gratuito',
+  // Outras áreas - Todas gratuitas
+  homepage: 'gratuito',
+  upgradePage: 'gratuito',
+  newsSection: 'gratuito',
+  helpCenter: 'gratuito',
+  referralProgram: 'gratuito',
+  recommendedSection: 'gratuito',
+  linksSection: 'gratuito',
+  trendRushLimit: 'gratuito',
+  // Limites e Suporte
+  maxDownloads: 'gratuito',
+  accessToSupport: 'member', // Mantendo suporte como member
+  customizationOptions: 'pro' // Mantendo customização como pro
+};
+
+// Mensagens de upgrade para cada recurso
+export const upgradeMessages: Record<FeatureKey, string> = {
+  // Ferramentas - Todas disponíveis no plano gratuito
+  whatsappGenerator: 'Este recurso já está disponível no seu plano atual.',
+  socialProofGenerator: 'Este recurso já está disponível no seu plano atual.',
+  profileStructureGenerator: 'Este recurso já está disponível no seu plano atual.',
+  hashtagGenerator: 'Este recurso já está disponível no seu plano atual.',
+  persuasiveCopyGenerator: 'Este recurso já está disponível no seu plano atual.',
+  customCreatives: 'Este recurso já está disponível no seu plano atual.',
+  ltvFunnel: 'Este recurso já está disponível no seu plano atual.',
+  usefulSites: 'Este recurso já está disponível no seu plano atual.',
+  notificationSimulator: 'Este recurso já está disponível no seu plano atual.',
+  platformComparison: 'Este recurso já está disponível no seu plano atual.',
+  trendRush: 'Este recurso já está disponível no seu plano atual. Limitado a 5 áudios por dia.',
+  digitalGames: 'Este recurso já está disponível no seu plano atual.',
+  storytellingGenerator: 'Este recurso já está disponível no seu plano atual.',
+  orderBumpGenerator: 'Este recurso já está disponível no seu plano atual.',
+  // Comunidade
+  whatsappGroups: 'Este recurso já está disponível no seu plano atual.',
+  discordServers: 'Este recurso já está disponível no seu plano atual.',
+  promoteCommunity: 'Atualize para o plano Member para promover sua própria comunidade.',
+  telegramChannels: 'Este recurso já está disponível no seu plano atual.',
+  // Aprendizado - Todos disponíveis no plano gratuito
+  freeCourses: 'Este recurso já está disponível no seu plano atual.',
+  relevantContent: 'Este recurso já está disponível no seu plano atual.',
+  ebooks: 'Este recurso já está disponível no seu plano atual.',
+  mindMaps: 'Este recurso já está disponível no seu plano atual.',
+  salesStrategy: 'Este recurso já está disponível no seu plano atual.',
+  profileStructure: 'Este recurso já está disponível no seu plano atual.',
+  freePacks: 'Este recurso já está disponível no seu plano atual.',
+  learningChallenges: 'Este recurso já está disponível no seu plano atual.',
+  publishLearningContent: 'Atualize para o plano Member para publicar conteúdo na área de aprendizado.',
+  // Afiliados - Todos disponíveis no plano gratuito
+  topAffiliates: 'Este recurso já está disponível no seu plano atual.',
+  bestSellers: 'Este recurso já está disponível no seu plano atual.',
+  mostAffiliates: 'Este recurso já está disponível no seu plano atual.',
+  mostComplete: 'Este recurso já está disponível no seu plano atual.',
+  testimonials: 'Este recurso já está disponível no seu plano atual.',
+  sendAffiliateData: 'Atualize para o plano Member para enviar dados de afiliados.',
+  // Serviços de Marketing Digital
+  viewServices: 'Este recurso já está disponível no seu plano atual.',
+  contractServices: 'Este recurso já está disponível no seu plano atual.',
+  viewServiceRequests: 'Atualize para o plano Member para visualizar solicitações de serviços.',
+  promoteServices: 'Atualize para o plano Pro para divulgar seus próprios serviços de marketing digital.',
+  requestServices: 'Este recurso já está disponível no seu plano atual.',
+  // Outras áreas
+  homepage: 'Este recurso já está disponível no seu plano atual.',
+  upgradePage: 'Este recurso já está disponível no seu plano atual.',
+  newsSection: 'Este recurso já está disponível no seu plano atual.',
+  helpCenter: 'Este recurso já está disponível no seu plano atual.',
+  referralProgram: 'Este recurso já está disponível no seu plano atual.',
+  recommendedSection: 'Este recurso já está disponível no seu plano atual.',
+  linksSection: 'Este recurso já está disponível no seu plano atual.',
+  trendRushLimit: 'Atualize para o plano Member ou superior para aumentar o limite de áudios no Trend Rush.',
+  // Limites e Suporte
+  maxDownloads: 'Atualize seu plano para aumentar seu limite de downloads mensais.',
+  accessToSupport: 'Atualize para o plano Member para ter acesso a suporte prioritário.',
+  customizationOptions: 'Atualize para o plano Pro para personalizar sua experiência.',
+  publishLearningContent: 'Atualize para o plano Member para publicar conteúdo na área de aprendizado.',
+  sendAffiliateData: 'Atualize para o plano Member para enviar dados de afiliados.'
+};
+
+/**
+ * Hook para gerenciar permissões de recursos com base no plano do usuário
+ */
+export const usePermissions = () => {
+  const { profile } = useAuth();
+  const currentPlan = profile?.plano || 'gratuito';
+  
+  // Retorna memoizado para evitar recriação em cada renderização
+  return useMemo(() => {
+    // Verifica se o usuário tem acesso a um recurso específico usando o mapa de permissões
+    const hasFeatureAccessByMap = (featureKey: FeatureKey): boolean => {
+      return featurePermissions[currentPlan][featureKey];
+    };
+    
+    // Verifica se o usuário tem acesso a um recurso específico usando minimumPlans
+    const hasFeatureAccess = (featureKey: FeatureKey): boolean => {
+      const requiredPlan = minimumPlans[featureKey];
+      return hasMinimumPlan(requiredPlan);
+    };
+    
+    // Verifica se o usuário tem um plano mínimo necessário
+    const hasMinimumPlan = (requiredPlan: UserPlan): boolean => {
+      const planOrder: UserPlan[] = ['gratuito', 'member', 'pro', 'elite'];
+      const currentPlanIndex = planOrder.indexOf(currentPlan);
+      const requiredPlanIndex = planOrder.indexOf(requiredPlan);
+      
+      return currentPlanIndex >= requiredPlanIndex;
+    };
+    
+    // Obtém a mensagem de upgrade para um recurso
+    const getUpgradeMessage = (featureKey: FeatureKey): string => {
+      if (hasFeatureAccess(featureKey)) {
+        return 'Este recurso já está disponível no seu plano atual.';
+      }
+      return upgradeMessages[featureKey];
+    };
+    
+    // Obtém o plano atual do usuário
+    const getCurrentPlan = (): UserPlan => {
+      return currentPlan;
+    };
+    
+    // Obtém o limite de downloads do usuário
+    const getDownloadLimit = (): number => {
+      return downloadLimits[currentPlan];
+    };
+    
+    // Obtém o limite de áudios do Trend Rush por dia
+    const getTrendRushLimit = (): number => {
+      return trendRushLimits[currentPlan];
+    };
+    
+    // Verifica se o usuário tem downloads ilimitados
+    const hasUnlimitedDownloads = (): boolean => {
+      return downloadLimits[currentPlan] === -1;
+    };
+    
+    // Verifica se o usuário tem limite ilimitado no Trend Rush
+    const hasUnlimitedTrendRush = (): boolean => {
+      return trendRushLimits[currentPlan] === -1;
+    };
+    
+    // Obtém mensagem personalizada de upgrade para o usuário
+    const getUserUpgradeMessage = (): string => {
+      switch (currentPlan) {
+        case 'gratuito':
+          return 'Atualize para o plano Member e tenha acesso a mais recursos!';
+        case 'member':
+          return 'Atualize para o plano Pro e eleve seu potencial como afiliado!';
+        case 'pro':
+          return 'Atualize para o plano Elite e tenha acesso a todos os recursos!';
+        case 'elite':
+          return 'Você já possui o melhor plano disponível!';
+        default:
+          return 'Atualize seu plano para desbloquear mais recursos!';
+      }
+    };
+    
+    // Obtém todos os recursos disponíveis no plano atual
+    const getAvailableFeatures = (): FeatureKey[] => {
+      return Object.entries(minimumPlans)
+        .filter(([key]) => hasFeatureAccess(key as FeatureKey))
+        .map(([key]) => key as FeatureKey);
+    };
+    
+    return {
+      hasFeatureAccess,
+      hasFeatureAccessByMap,
+      hasMinimumPlan,
+      getUpgradeMessage,
+      getCurrentPlan,
+      getDownloadLimit,
+      getTrendRushLimit,
+      hasUnlimitedDownloads,
+      hasUnlimitedTrendRush,
+      getUserUpgradeMessage,
+      getAvailableFeatures
+    };
+  }, [currentPlan]);
+};
+
+// Também exportar uma versão não-hook para componentes classe ou contextos
+export const hasFeatureAccess = (plan: UserPlan, featureKey: FeatureKey): boolean => {
+  const requiredPlan = minimumPlans[featureKey];
+  const planOrder: UserPlan[] = ['gratuito', 'member', 'pro', 'elite'];
+  const currentPlanIndex = planOrder.indexOf(plan);
+  const requiredPlanIndex = planOrder.indexOf(requiredPlan);
+  
+  return currentPlanIndex >= requiredPlanIndex;
+};
+
+export const getFeatureName = (featureKey: FeatureKey): string => {
+  return featureNames[featureKey];
+};
+
+export const getUpgradeMessage = (currentPlan: UserPlan, featureKey: FeatureKey): string => {
+  if (hasFeatureAccess(currentPlan, featureKey)) {
+    return 'Este recurso já está disponível no seu plano atual.';
+  }
+  return upgradeMessages[featureKey];
+}; 
