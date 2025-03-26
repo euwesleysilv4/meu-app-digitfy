@@ -1,34 +1,21 @@
 import { motion } from "framer-motion";
 import { Download, FileText, Plus, Instagram, Map, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
 interface MindMap {
-  id: number;
+  id: string;
   title: string;
   description: string;
-  image: string;
-  fileUrl: string;
+  image_url: string;
+  file_url: string;
+  status: string;
   instagram?: string;
+  created_at: string;
+  updated_at: string;
+  view_count: number;
+  like_count: number;
 }
-
-const mindMaps: MindMap[] = [
-  {
-    id: 1,
-    title: "Mapa Mental de Marketing Digital",
-    description: "Estratégias essenciais para o sucesso no marketing digital.",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80",
-    fileUrl: "#",
-    instagram: "@marketingexpert"
-  },
-  {
-    id: 2,
-    title: "Mapa Mental de Produtividade",
-    description: "Técnicas para aumentar a produtividade no dia a dia.",
-    image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80",
-    fileUrl: "#"
-  },
-  // Adicione mais mapas mentais aqui...
-];
 
 const mindMapTools = [
   {
@@ -55,15 +42,129 @@ const MindMaps = () => {
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
   const [mindMapLink, setMindMapLink] = useState("");
   const [instagram, setInstagram] = useState("");
+  const [mindMaps, setMindMaps] = useState<MindMap[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmitSuggestion = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchMindMaps = async () => {
+      setIsLoading(true);
+      setErrorMessage("");
+      
+      try {
+        // Incrementar a contagem de visualizações
+        const { data, error } = await supabase
+          .from('mind_maps')
+          .select('*')
+          .eq('status', 'published')
+          .order('updated_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        setMindMaps(data || []);
+      } catch (err) {
+        console.error('Erro ao carregar mapas mentais:', err);
+        setErrorMessage("Não foi possível carregar os mapas mentais. Tente novamente mais tarde.");
+        
+        // Dados de exemplo em caso de falha no carregamento
+        setMindMaps([
+          {
+            id: '1',
+            title: 'Mapa Mental de Marketing Digital',
+            description: 'Estratégias essenciais para o sucesso no marketing digital.',
+            image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80',
+            file_url: 'https://miro.com/app/board/o9J_lq9W1_s=/',
+            status: 'published',
+            instagram: '@marketingexpert',
+            created_at: '2023-03-10T14:30:00',
+            updated_at: '2023-03-15T10:45:00',
+            view_count: 120,
+            like_count: 45
+          },
+          {
+            id: '2',
+            title: 'Mapa Mental de Produtividade',
+            description: 'Técnicas para aumentar a produtividade no dia a dia.',
+            image_url: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80',
+            file_url: 'https://miro.com/app/board/uXjVMR2W65s=/',
+            status: 'published',
+            created_at: '2023-03-05T09:15:00',
+            updated_at: '2023-03-20T16:20:00',
+            view_count: 85,
+            like_count: 32
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchMindMaps();
+  }, []);
+
+  const handleSubmitSuggestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica para enviar a sugestão
-    console.log("Link enviado:", mindMapLink);
-    console.log("Instagram:", instagram);
-    setShowSuggestionModal(false);
-    setMindMapLink("");
-    setInstagram("");
+    
+    if (!mindMapLink) {
+      alert("Por favor, insira o link do mapa mental.");
+      return;
+    }
+    
+    try {
+      // Obter informações do usuário atual (se estiver logado)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const suggestion = {
+        file_url: mindMapLink,
+        instagram: instagram || null,
+        status: 'draft', // Sugestões começam como rascunho para aprovação de admin
+        title: 'Sugestão de Mapa Mental', // Título temporário
+        description: 'Mapa mental enviado por usuário', // Descrição temporária
+        created_at: new Date().toISOString(),
+        created_by: session?.user?.id || null
+      };
+      
+      const { error } = await supabase
+        .from('mind_maps')
+        .insert([suggestion]);
+        
+      if (error) throw error;
+      
+      alert("Seu mapa mental foi enviado com sucesso e será analisado pela nossa equipe. Obrigado pela contribuição!");
+      setShowSuggestionModal(false);
+      setMindMapLink("");
+      setInstagram("");
+    } catch (err) {
+      console.error('Erro ao enviar sugestão:', err);
+      alert("Não foi possível enviar sua sugestão. Por favor, tente novamente mais tarde.");
+    }
+  };
+  
+  const incrementViewCount = async (id: string) => {
+    try {
+      // Primeiro, obtenha o valor atual de view_count
+      const { data, error } = await supabase
+        .from('mind_maps')
+        .select('view_count')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      
+      const newViewCount = (data?.view_count || 0) + 1;
+      
+      // Atualize o view_count
+      const { error: updateError } = await supabase
+        .from('mind_maps')
+        .update({ view_count: newViewCount })
+        .eq('id', id);
+        
+      if (updateError) throw updateError;
+    } catch (err) {
+      console.error('Erro ao incrementar visualizações:', err);
+    }
   };
 
   return (
@@ -222,70 +323,100 @@ const MindMaps = () => {
         </div>
       )}
 
-      {/* Vitrine de Mapas Mentais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {mindMaps.map((mindMap, index) => (
-          <motion.div
-            key={mindMap.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col"
-          >
-            {/* Imagem */}
-            <div className="relative aspect-[4/3] overflow-hidden">
-              <img 
-                src={mindMap.image} 
-                alt={mindMap.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                onError={(e) => {
-                  e.currentTarget.src = "https://via.placeholder.com/800x600?text=Imagem+Indisponível";
-                }}
-              />
-            </div>
+      {/* Estado de carregamento */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+        </div>
+      )}
+      
+      {/* Mensagem de erro */}
+      {errorMessage && !isLoading && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          {errorMessage}
+        </div>
+      )}
 
-            {/* Informações */}
-            <div className="p-4 flex-1 flex flex-col">
-              {/* Título e Descrição */}
-              <div className="flex-1 mb-2">
-                <h2 className="text-lg font-semibold text-gray-800 line-clamp-2 mb-2">
-                  {mindMap.title}
-                </h2>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {mindMap.description}
-                </p>
+      {/* Vitrine de Mapas Mentais */}
+      {!isLoading && mindMaps.length === 0 && !errorMessage && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+          <Map className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum mapa mental disponível ainda</h3>
+          <p className="text-gray-500 mb-6">Seja o primeiro a contribuir compartilhando um mapa mental útil!</p>
+          <button
+            onClick={() => setShowSuggestionModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Enviar Mapa Mental
+          </button>
+        </div>
+      )}
+
+      {!isLoading && mindMaps.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {mindMaps.map((mindMap, index) => (
+            <motion.div
+              key={mindMap.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col"
+            >
+              {/* Imagem */}
+              <div className="relative aspect-[4/3] overflow-hidden">
+                <img 
+                  src={mindMap.image_url} 
+                  alt={mindMap.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://via.placeholder.com/800x600?text=Mapa+Mental";
+                  }}
+                />
               </div>
 
-              {/* Enviado por */}
-              {mindMap.instagram && (
-                <div className="flex items-center gap-2 text-sm text-emerald-600 mb-3 p-2 bg-emerald-50 rounded-lg">
-                  <span>Enviado por</span>
-                  <Instagram className="w-4 h-4" />
-                  <a 
-                    href={`https://instagram.com/${mindMap.instagram.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-emerald-700 transition-colors duration-300"
-                  >
-                    {mindMap.instagram}
-                  </a>
+              {/* Informações */}
+              <div className="p-4 flex-1 flex flex-col">
+                {/* Título e Descrição */}
+                <div className="flex-1 mb-2">
+                  <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">{mindMap.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2">{mindMap.description}</p>
                 </div>
-              )}
 
-              {/* Botão Acessar Agora */}
-              <a
-                href={mindMap.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-300"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Acessar Agora</span>
-              </a>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                {/* Instagram e Download */}
+                <div className="mt-auto pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    {mindMap.instagram ? (
+                      <a 
+                        href={`https://instagram.com/${mindMap.instagram.replace('@', '')}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-emerald-500"
+                      >
+                        <Instagram className="w-3 h-3" />
+                        <span>{mindMap.instagram}</span>
+                      </a>
+                    ) : (
+                      <span className="text-xs text-gray-400">Equipe DigitalFy</span>
+                    )}
+                    
+                    <a
+                      href={mindMap.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => incrementViewCount(mindMap.id)}
+                      className="flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                    >
+                      <span>Acessar</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

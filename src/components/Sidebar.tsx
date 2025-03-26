@@ -263,12 +263,16 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center md:hidden p-4 border-b border-gray-100">
             <div className="flex items-center space-x-2">
-              <div className="bg-emerald-500 p-2 rounded-lg">
-                <Zap size={20} className="text-white" />
+              <div className="bg-white p-1 rounded-lg">
+                <img 
+                  src="/novas%20logos/fav-icon-digitfy-esmeralda.png" 
+                  alt="DigitFy" 
+                  className="w-7 h-7" 
+                />
               </div>
               <div className="flex items-baseline">
-                <span className="text-xl font-bold text-emerald-600">DigitFy</span>
-                <span className="text-xs text-emerald-600/60 ml-0.5">.com.br</span>
+                <span className="text-xl font-bold text-emerald-500">DigitFy</span>
+                <span className="text-xs text-emerald-500 ml-0.5">.com.br</span>
               </div>
             </div>
             <button 
@@ -322,7 +326,6 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
                 <div className="pl-8 mt-1 space-y-1">
                   <SubMenuItem to="/tools/trend-rush" label="Trend Rush" disabled={!session} />
                   <SubMenuItem to="/whatsapp-generator" label="Gerador de Link WhatsApp" disabled={!session} />
-                  <SubMenuItem to="/social-proof-generator" label="Gerador de Prova Social" disabled={!session} />
                   <SubMenuItem to="/profile-structure-generator" label="Gerador de Estrutura de Perfil" disabled={!session} />
                   <SubMenuItem to="/hashtag-generator" label="Gerador de Hashtags" disabled={!session} />
                   <SubMenuItem to="/persuasive-copy" label="Gerador de Copy Persuasiva" disabled={!session} />
@@ -332,7 +335,6 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
                   <SubMenuItem to="/tools/useful-sites" label="Sites Úteis" disabled={!session} />
                   <SubMenuItem to="/tools/notification-simulator" label="Simulador de Notificações" disabled={!session} />
                   <SubMenuItem to="/tools/commission-calculator" label="Comparador de Plataformas" disabled={!session} />
-                  <SubMenuItem to="/tools/digital-games" label="Jogos Digitais" disabled={!session} />
                 </div>
               )}
             </div>
@@ -351,9 +353,6 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
               {activeDropdown === 'affiliate' && (
                 <div className="pl-8 mt-1 space-y-1">
                   <SubMenuItem to="/affiliate/top" label="Top Afiliados" disabled={!session} />
-                  <SubMenuItem to="/affiliate/best-sellers" label="Mais Vendidos" disabled={!session} />
-                  <SubMenuItem to="/affiliate/most-affiliates" label="Mais Afiliados" disabled={!session} />
-                  <SubMenuItem to="/affiliate/most-complete" label="Mais Completos" disabled={!session} />
                   <SubMenuItem to="/affiliate/testimonials" label="Depoimentos" disabled={!session} />
                 </div>
               )}

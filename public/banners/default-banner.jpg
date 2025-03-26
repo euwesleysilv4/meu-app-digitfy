@@ -1,0 +1,26 @@
+<svg width="1200" height="200" viewBox="0 0 1200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo gradiente -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d9488;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Retângulo de fundo -->
+  <rect width="1200" height="200" fill="url(#grad1)" />
+  
+  <!-- Padrão de decoração -->
+  <path d="M0,100 C300,150 600,50 1200,90" stroke="rgba(255, 255, 255, 0.2)" stroke-width="3" fill="none" />
+  <path d="M0,150 C200,100 700,160 1200,120" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" />
+  
+  <!-- Círculos decorativos -->
+  <circle cx="100" cy="50" r="30" fill="rgba(255, 255, 255, 0.1)" />
+  <circle cx="1100" cy="150" r="40" fill="rgba(255, 255, 255, 0.1)" />
+  <circle cx="200" cy="160" r="15" fill="rgba(255, 255, 255, 0.15)" />
+  <circle cx="1000" cy="50" r="20" fill="rgba(255, 255, 255, 0.15)" />
+  
+  <!-- Texto principal -->
+  <text x="600" y="95" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="white">Bem-vindo à DigitFy</text>
+  <text x="600" y="135" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="white">Sua plataforma completa de marketing digital</text>
+</svg> 

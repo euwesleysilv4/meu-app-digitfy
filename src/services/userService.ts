@@ -29,14 +29,31 @@ export const userService = {
    */
   async updateUserPlan(userId: string, newPlan: UserPlan) {
     try {
-      // Usar a função RPC para atualizar o plano do usuário
-      const { data, error } = await supabase.rpc('update_user_plan_v2', {
-        user_id: userId,
-        new_plan: newPlan
-      });
-
-      if (error) throw error;
-      return { success: !!data, error: null };
+      console.log('Tentando atualização direta devido a erros recorrentes...');
+      // Neste ponto vamos ignorar todas as funções RPC e fazer uma atualização direta
+      // para evitar qualquer referência à coluna data_expiracao_plano
+      
+      // Verificar se o usuário atual é admin
+      const { isAdmin, error: adminError } = await this.isAdmin();
+      if (!isAdmin) {
+        throw new Error('Apenas administradores podem atualizar planos');
+      }
+      
+      // Fazer atualização direta na tabela
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          plano: newPlan,
+          data_modificacao: new Date().toISOString() 
+        })
+        .eq('id', userId);
+        
+      if (error) {
+        console.error('Erro na atualização direta do plano:', error);
+        throw error;
+      }
+      
+      return { success: true, error: null };
     } catch (error: any) {
       console.error('Erro ao atualizar plano do usuário:', error);
       return { success: false, error };
@@ -49,13 +66,24 @@ export const userService = {
    */
   async forceUpdateUserPlan(userId: string, newPlan: UserPlan) {
     try {
-      console.log('UserService: Iniciando atualização forçada de plano', { userId, newPlan });
+      console.log('Aplicando atualização direta na tabela sem usar funções RPC...');
       
-      // Usar o método direto do profiles para atualizar o plano
-      const { success, error } = await profiles.forceUpdateUserPlan(userId, newPlan);
+      // Atualização direta na tabela
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ 
+          plano: newPlan,
+          data_modificacao: new Date().toISOString() 
+        })
+        .eq('id', userId);
+        
+      if (error) {
+        console.error('Erro na atualização direta do plano:', error);
+        throw error;
+      }
       
-      if (error) throw error;
-      return { success, error: null };
+      console.log('Plano atualizado com sucesso para:', newPlan);
+      return { success: true, error: null };
     } catch (error: any) {
       console.error('UserService: Erro ao forçar atualização do plano do usuário:', error);
       return { success: false, error };
@@ -67,12 +95,43 @@ export const userService = {
    */
   async isSpecificAdmin() {
     try {
-      const { data, error } = await supabase.rpc('is_specific_admin');
+      // Primeiro verificar se há uma sessão válida
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (error) throw error;
-      return { isAdmin: !!data, error: null };
+      if (sessionError || !sessionData?.session) {
+        return { isAdmin: false, error: sessionError || 'Sem sessão válida' };
+      }
+
+      // Verificar usando a função RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('is_specific_admin');
+      
+      if (rpcError) {
+        console.error('Erro na verificação RPC:', rpcError);
+        // Se houver erro na RPC, tenta verificar pelo perfil
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', sessionData.session.user.id)
+          .single();
+        
+        if (profileError) {
+          return { isAdmin: false, error: profileError };
+        }
+
+        return { 
+          isAdmin: profile?.role === 'admin',
+          error: null 
+        };
+      }
+
+      // Se a RPC retornou true, o usuário é admin
+      if (rpcData === true) {
+        return { isAdmin: true, error: null };
+      }
+
+      return { isAdmin: false, error: null };
     } catch (error: any) {
-      console.error('Erro ao verificar se é o administrador específico:', error);
+      console.error('Erro ao verificar admin:', error);
       return { isAdmin: false, error };
     }
   },
@@ -179,6 +238,26 @@ export const userService = {
       return { success: !!data, error: null };
     } catch (error: any) {
       console.error('Erro ao alterar status de banimento do usuário:', error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Remove uma comunidade específica
+   */
+  async removeCommunity(communityId: string) {
+    try {
+      const { data, error } = await supabase.rpc('remove_community', {
+        p_community_id: communityId
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Erro ao remover comunidade:', error);
       return { success: false, error };
     }
   }

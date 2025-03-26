@@ -157,37 +157,10 @@ const Home: React.FC = () => {
     // Benefícios listados
     const benefits = [
       "Cursos atualizados semanalmente",
-      "Certificados gratuitos",
       "Ferramentas exclusivas",
-      "Suporte 24/7",
       "Templates prontos para usar",
       "Networking qualificado"
     ];
-
-    // Efeito para animar os números
-    useEffect(() => {
-      const duration = 2000; // duração da animação em ms
-      const interval = 20; // intervalo entre atualizações
-      const steps = duration / interval;
-      
-      let step = 0;
-      const timer = setInterval(() => {
-        step++;
-        const progress = step / steps;
-        
-        setCounts({
-          users: Math.floor(progress * 50000),
-          content: Math.floor(progress * 100),
-          tools: Math.floor(progress * 30)
-        });
-        
-        if (step >= steps) {
-          clearInterval(timer);
-        }
-      }, interval);
-      
-      return () => clearInterval(timer);
-    }, []);
 
     // Animações para elementos individuais
     const fadeInUp = {
@@ -265,9 +238,9 @@ const Home: React.FC = () => {
                 variants={fadeInUp}
                 className="lg:col-span-6"
               >
-                <h1 className="text-4xl sm:text-6xl font-bold mb-6 leading-tight text-center sm:text-left">
+                <h1 className="text-4xl sm:text-6xl font-bold mb-6 leading-tight sm:leading-[1.1] text-center sm:text-left">
                   <motion.span 
-                    className="block text-emerald-500"
+                    className="block text-emerald-500 pb-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
@@ -275,7 +248,7 @@ const Home: React.FC = () => {
                     Aprenda tudo sobre
                   </motion.span>
                   <motion.span 
-                    className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500"
+                    className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 pb-3"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
@@ -404,7 +377,7 @@ const Home: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Usuários</p>
-                        <p className="font-semibold text-gray-800">{counts.users.toLocaleString()}+</p>
+                        <p className="font-semibold text-gray-800 text-xs italic">Desbloqueie no Login</p>
                       </div>
                     </motion.div>
                     
@@ -414,7 +387,7 @@ const Home: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Conteúdos</p>
-                        <p className="font-semibold text-gray-800">{counts.content}+</p>
+                        <p className="font-semibold text-gray-800 text-xs italic">Desbloqueie no Login</p>
                       </div>
                     </motion.div>
                     
@@ -424,7 +397,7 @@ const Home: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Ferramentas</p>
-                        <p className="font-semibold text-gray-800">{counts.tools}+</p>
+                        <p className="font-semibold text-gray-800 text-xs italic">Desbloqueie no Login</p>
                       </div>
                     </motion.div>
                     
@@ -434,7 +407,7 @@ const Home: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Suporte</p>
-                        <p className="font-semibold text-gray-800">24/7</p>
+                        <p className="font-semibold text-gray-800 text-xs italic">Desbloqueie no Login</p>
                       </div>
                     </motion.div>
                   </div>
@@ -501,7 +474,10 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1 }}
                 className="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 text-sm font-medium rounded-full mb-4"
               >
-                Crescimento Comparativo
+                <span className="flex items-center gap-1">
+                  <AreaChart size={14} />
+                  Crescimento Comparativo
+                </span>
               </motion.span>
               <motion.h2 
                 initial={{ opacity: 0, y: 20 }}
@@ -749,7 +725,10 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1 }}
                 className="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 text-sm font-medium rounded-full mb-4"
               >
-                Depoimentos
+                <span className="flex items-center gap-1">
+                  <Rocket size={14} />
+                  Aprenda na Prática
+                </span>
               </motion.span>
               <motion.h2 
                 initial={{ opacity: 0, y: 20 }}
@@ -757,7 +736,7 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.5 }}
                 className="text-3xl font-bold mb-4 text-gray-800"
               >
-                O que nossa comunidade diz
+                Desenvolva habilidades de alta demanda
               </motion.h2>
               <motion.p 
                 initial={{ opacity: 0 }}
@@ -765,61 +744,82 @@ const Home: React.FC = () => {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="text-gray-600 max-w-2xl mx-auto"
               >
-                Histórias reais de profissionais que transformaram suas carreiras com nossos recursos
+                Tenha acesso a conteúdos atualizados e práticos que vão te dar vantagem no mercado
               </motion.p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 * index, duration: 0.5 }}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: "0 15px 30px -10px rgba(16, 185, 129, 0.1)",
-                    transition: { duration: 0.2 } 
-                  }}
-                  className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-100/30 relative"
-                >
-                  {/* Círculo verde removido */}
-                  
-                  {/* Conteúdo do depoimento */}
-                  <div className="mb-6">
-                    <p className="text-gray-600 text-sm italic font-light leading-relaxed">
-                      {testimonial.content}
-                    </p>
-                  </div>
-                  
-                  {/* Informações do autor com avatar ao lado */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={testimonial.avatar} 
-                        alt={testimonial.name}
-                        className="w-12 h-12 rounded-xl object-cover"
-                      />
-                      <div>
-                        <h4 className="font-bold text-gray-800 mb-0.5">{testimonial.name}</h4>
-                        <span className="text-emerald-500 text-xs font-medium">
-                          {testimonial.role}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          size={14} 
-                          className={`${i < testimonial.rating ? "text-emerald-500 fill-emerald-500" : "text-gray-200"} ml-0.5`} 
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.5 }}
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 15px 30px -10px rgba(16, 185, 129, 0.1)",
+                  transition: { duration: 0.2 } 
+                }}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-100/30 relative flex flex-col"
+              >
+                <div className="bg-gradient-to-r from-emerald-400 to-teal-500 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+                  <FileText className="text-white" size={22} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Conteúdo Atualizado</h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  Receba semanalmente novos materiais e cursos sobre as últimas tendências em marketing digital, sempre alinhados às práticas do mercado.
+                </p>
+                <div className="mt-auto flex items-center text-emerald-500 text-sm font-medium">
+                  <span>Saiba mais</span>
+                  <ChevronRight size={16} className="ml-1" />
+                </div>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 15px 30px -10px rgba(16, 185, 129, 0.1)",
+                  transition: { duration: 0.2 } 
+                }}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-100/30 relative flex flex-col"
+              >
+                <div className="bg-gradient-to-r from-emerald-400 to-teal-500 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+                  <Wrench className="text-white" size={22} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Ferramentas Exclusivas</h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  Acesso a diversas ferramentas práticas desenvolvidas para otimizar seus resultados e economizar tempo na criação de estratégias de marketing.
+                </p>
+                <div className="mt-auto flex items-center text-emerald-500 text-sm font-medium">
+                  <span>Conheça as ferramentas</span>
+                  <ChevronRight size={16} className="ml-1" />
+                </div>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.5 }}
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 15px 30px -10px rgba(16, 185, 129, 0.1)",
+                  transition: { duration: 0.2 } 
+                }}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-100/30 relative flex flex-col"
+              >
+                <div className="bg-gradient-to-r from-emerald-400 to-teal-500 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
+                  <Users2 className="text-white" size={22} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Comunidade Ativa</h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  Conecte-se com profissionais de marketing digital, compartilhe experiências e aprenda com cases reais de sucesso de outros membros da comunidade.
+                </p>
+                <div className="mt-auto flex items-center text-emerald-500 text-sm font-medium">
+                  <span>Conhecer comunidade</span>
+                  <ChevronRight size={16} className="ml-1" />
+                </div>
+              </motion.div>
             </div>
           </motion.div>
 
@@ -921,11 +921,15 @@ const Home: React.FC = () => {
               {/* Coluna de informações da empresa */}
               <div className="col-span-1">
                 <div className="flex items-center mb-4 gap-2">
-                  <div className="bg-emerald-500 p-2 rounded-lg">
-                    <Zap size={18} className="text-white" />
+                  <div className="bg-transparent p-0 rounded-xl shadow-lg shadow-emerald-500/20 animate-bounce-subtle">
+                    <img 
+                      src="/novas%20logos/fav-icon-digitfy-esmeralda.png" 
+                      alt="DigitFy" 
+                      className="w-10 h-10" 
+                    />
                   </div>
                   <div className="flex items-baseline">
-                    <h3 className="text-xl font-bold text-emerald-600">DigitFy</h3>
+                    <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">DigitFy</h3>
                     <span className="text-xs text-emerald-600/60 ml-0.5">.com.br</span>
                   </div>
                 </div>
@@ -935,39 +939,22 @@ const Home: React.FC = () => {
                 </p>
                 <div className="flex space-x-4">
                   <motion.a 
-                    href="#" 
+                    href="https://www.instagram.com/digitfy.com.br/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     whileHover={{ y: -3, transition: { duration: 0.1 } }}
                     className="bg-gray-100 hover:bg-emerald-50 text-gray-500 hover:text-emerald-500 p-2 rounded-full transition-all duration-150"
                   >
                     <Instagram size={18} />
                   </motion.a>
                   <motion.a 
-                    href="#" 
+                    href="https://www.youtube.com/@digitfyoficial"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     whileHover={{ y: -3, transition: { duration: 0.1 } }}
                     className="bg-gray-100 hover:bg-emerald-50 text-gray-500 hover:text-emerald-500 p-2 rounded-full transition-all duration-150"
                   >
                     <Youtube size={18} />
-                  </motion.a>
-                  <motion.a 
-                    href="#" 
-                    whileHover={{ y: -3, transition: { duration: 0.1 } }}
-                    className="bg-gray-100 hover:bg-emerald-50 text-gray-500 hover:text-emerald-500 p-2 rounded-full transition-all duration-150"
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="18" 
-                      height="18" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      className="lucide"
-                    >
-                      <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0 -6 0"></path>
-                      <path d="M16.82 15.42c-1.92 2.1 -3.32 2.97 -5.82 2.97c-2.5 0 -3.9 -.87 -5.82 -2.97c-1.59 -1.74 -2.18 -3.78 -2.18 -8.42c0 -3.5 1.63 -5 3 -5c1.37 0 1.5 1 3 1h4c1.5 0 1.71 -1 3 -1c1.37 0 3 1.5 3 5c0 4.64 -.59 6.68 -2.18 8.42z"></path>
-                    </svg>
                   </motion.a>
                 </div>
               </div>

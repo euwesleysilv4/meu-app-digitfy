@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, MessageCircle, TrendingUp, UserPlus, Zap, Crown, Star, Medal, Badge } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { PublicUserProfile } from '../lib/supabase';
+import { userService } from "../services/userService";
+import { playerService } from "../services/playerService";
+import { RecommendedPlayer } from "../types/player";
 
 interface UserStatus {
   type: 'joined' | 'subscription' | 'invite' | 'article' | 'achievement' | 'active';
@@ -27,6 +30,8 @@ const Community = () => {
   const [usersLoading, setUsersLoading] = useState(true);
   const [realUsers, setRealUsers] = useState<PublicUserProfile[]>([]);
   const [membersLoading, setMembersLoading] = useState(true);
+  const [recommendedPlayers, setRecommendedPlayers] = useState<RecommendedPlayer[]>([]);
+  const [playersLoading, setPlayersLoading] = useState(true);
 
   // Lista expandida de membros com status
   const mockMembers: Member[] = [
@@ -354,6 +359,27 @@ const Community = () => {
     }
   };
 
+  // Função para buscar os players recomendados
+  useEffect(() => {
+    const fetchRecommendedPlayers = async () => {
+      setPlayersLoading(true);
+      try {
+        const { players, error } = await playerService.getActivePlayers();
+        if (error) {
+          console.error("Erro ao buscar players recomendados:", error);
+          return;
+        }
+        setRecommendedPlayers(players);
+      } catch (error) {
+        console.error("Erro ao buscar players recomendados:", error);
+      } finally {
+        setPlayersLoading(false);
+      }
+    };
+
+    fetchRecommendedPlayers();
+  }, []);
+
   // Buscar dados ao montar o componente
   useEffect(() => {
     fetchUserCount();
@@ -384,7 +410,7 @@ const Community = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section Modernizada */}
-      <div className="relative overflow-hidden pt-20 pb-40">
+      <div className="relative overflow-hidden pt-8 sm:pt-12 md:pt-20 pb-40">
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/50 to-transparent"></div>
         <motion.div 
           className="absolute inset-0"
@@ -396,20 +422,51 @@ const Community = () => {
         </motion.div>
 
         <div className="container mx-auto px-4 relative z-10">
+          {/* Card de usuários em tempo real */}
+          <motion.div 
+            className="flex items-center gap-4 bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[300px] mb-8 mx-auto max-w-fit"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <div className="relative">
+                <Users className="h-6 w-6 text-emerald-600" />
+                {/* Indicador de "ao vivo" */}
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full">
+                  <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping"></div>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  {usersLoading ? (
+                    <div className="text-2xl font-bold text-emerald-600 animate-pulse">...</div>
+                  ) : (
+                    <span className="text-2xl font-bold text-emerald-600">{formatNumber(userCount)}</span>
+                  )}
+                  <span className="text-xs text-emerald-600/80 bg-emerald-100/50 px-2 py-0.5 rounded-full">
+                    Em Tempo Real
+                  </span>
+                </div>
+                <span className="text-sm text-emerald-600/80">Usuários na DigitFy</span>
+              </div>
+            </div>
+            <motion.div 
+              className="flex items-center gap-1 bg-emerald-600/10 px-2.5 py-1 rounded-full"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-600">+15%</span>
+            </motion.div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-3xl mx-auto"
           >
-            <motion.div
-              className="inline-flex items-center gap-2 bg-emerald-50/80 backdrop-blur-sm px-4 py-2 rounded-full border border-emerald-100/30 mb-8"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Users className="h-5 w-5 text-emerald-600" />
-              <span className="text-emerald-600 text-sm font-medium">Comunidade DigitFy</span>
-            </motion.div>
-
             <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-emerald-800 to-gray-900 bg-clip-text text-transparent mb-6">
               Faça Parte do Nosso Crescimento
             </h1>
@@ -427,58 +484,6 @@ const Community = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-100 p-8"
         >
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                <Zap className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Novos Membros</h2>
-                <p className="text-sm text-gray-500">Acompanhe quem está chegando</p>
-              </div>
-            </div>
-
-            {/* Contador de usuários - Versão mais larga */}
-            <motion.div 
-              className="flex items-center gap-4 bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[300px]"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <div className="relative">
-                  <Users className="h-6 w-6 text-emerald-600" />
-                  {/* Indicador de "ao vivo" */}
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full">
-                    <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping"></div>
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    {usersLoading ? (
-                      <div className="text-2xl font-bold text-emerald-600 animate-pulse">...</div>
-                    ) : (
-                      <span className="text-2xl font-bold text-emerald-600">{formatNumber(userCount)}</span>
-                    )}
-                    <span className="text-xs text-emerald-600/80 bg-emerald-100/50 px-2 py-0.5 rounded-full">
-                      Em Tempo Real
-                    </span>
-                  </div>
-                  <span className="text-sm text-emerald-600/80">Usuários na DigitFy</span>
-                </div>
-              </div>
-              <motion.div 
-                className="flex items-center gap-1 bg-emerald-600/10 px-2.5 py-1 rounded-full"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="text-sm font-medium text-emerald-600">+15%</span>
-              </motion.div>
-            </motion.div>
-          </div>
-
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {visibleMembers.map((memberIndex, position) => (
               <motion.div
@@ -615,223 +620,57 @@ const Community = () => {
           </p>
         </motion.div>
 
-        <div className="relative overflow-hidden">
-          {/* Sombra esquerda */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none"></div>
-
+        <div className="relative">
           {/* Container do carrossel com animação contínua */}
-          <div className="carousel-container overflow-hidden">
-            <div className="carousel-track flex gap-6 py-4 px-2 animate-scroll">
-              {/* Cards - Primeiro conjunto */}
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=2" 
-                    alt="Thomas Macedo"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@thomasmacedo</h3>
-                      <p className="text-sm opacity-80">Marketing Digital</p>
+          <div className="carousel-container">
+            {playersLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full"></div>
+              </div>
+            ) : (
+              <div className="carousel-track animate-scroll">
+                {/* Primeiro conjunto de cards */}
+                {recommendedPlayers.map((player) => (
+                  <div key={player.id} className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
+                    <div className="aspect-9-16 relative overflow-hidden">
+                      <img 
+                        src={player.image_url} 
+                        alt={player.name}
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <div>
+                          <h3 className="text-xl font-bold">{player.username}</h3>
+                          <p className="text-sm opacity-80">{player.category}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=5" 
-                    alt="Ana Costa"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@aninha_costa</h3>
-                      <p className="text-sm opacity-80">Content Creator</p>
+                ))}
+                
+                {/* Cards duplicados para efeito contínuo */}
+                {recommendedPlayers.map((player) => (
+                  <div key={`duplicate-${player.id}`} className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
+                    <div className="aspect-9-16 relative overflow-hidden">
+                      <img 
+                        src={player.image_url} 
+                        alt={player.name}
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <div>
+                          <h3 className="text-xl font-bold">{player.username}</h3>
+                          <p className="text-sm opacity-80">{player.category}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=8" 
-                    alt="Lucas Mendes"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@lucas_growth</h3>
-                      <p className="text-sm opacity-80">Growth Hacker</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=9" 
-                    alt="Beatriz Lima"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@bea_digital</h3>
-                      <p className="text-sm opacity-80">Digital Strategist</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=10" 
-                    alt="Pedro Almeida"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@pedro_analytics</h3>
-                      <p className="text-sm opacity-80">Data Analytics</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=11" 
-                    alt="Camila Ferreira"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@camila_digital</h3>
-                      <p className="text-sm opacity-80">Estrategista Digital</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cards duplicados para efeito contínuo */}
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=2" 
-                    alt="Thomas Macedo"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@thomasmacedo</h3>
-                      <p className="text-sm opacity-80">Marketing Digital</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=5" 
-                    alt="Ana Costa"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@aninha_costa</h3>
-                      <p className="text-sm opacity-80">Content Creator</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=8" 
-                    alt="Lucas Mendes"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@lucas_growth</h3>
-                      <p className="text-sm opacity-80">Growth Hacker</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=9" 
-                    alt="Beatriz Lima"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@bea_digital</h3>
-                      <p className="text-sm opacity-80">Digital Strategist</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=10" 
-                    alt="Pedro Almeida"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@pedro_analytics</h3>
-                      <p className="text-sm opacity-80">Data Analytics</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative rounded-3xl overflow-hidden flex-shrink-0 w-72">
-                <div className="aspect-9-16 relative overflow-hidden">
-                  <img 
-                    src="https://i.pravatar.cc/800?img=11" 
-                    alt="Camila Ferreira"
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <div>
-                      <h3 className="text-xl font-bold">@camila_digital</h3>
-                      <p className="text-sm opacity-80">Estrategista Digital</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-          
-          {/* Sombra direita */}
-          <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
         </div>
       </div>
 
@@ -863,17 +702,38 @@ const Community = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(calc(-312px * 6));
+            transform: translateX(calc(-50%));
           }
         }
         
         .carousel-container {
           width: 100%;
           position: relative;
+          overflow: hidden;
+          mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        
+        .carousel-track {
+          display: flex;
+          width: fit-content;
+          gap: 1.5rem;
+          padding: 1rem 0.5rem;
+        }
+        
+        .carousel-track::before,
+        .carousel-track::after {
+          content: "";
+          height: 100%;
         }
         
         .animate-scroll {
-          animation: scroll 15s linear infinite;
+          animation: scroll 40s linear infinite;
+          will-change: transform;
+        }
+        
+        .animate-scroll:hover {
+          animation-play-state: paused;
         }
         `}
       </style>

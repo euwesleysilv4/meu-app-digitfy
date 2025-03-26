@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, ArrowRight, Zap, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Zap, Eye, EyeOff, CheckCircle, ExternalLink, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -11,6 +11,8 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   
   // Campos do formulário
   const [email, setEmail] = useState('');
@@ -195,10 +197,11 @@ const Auth = () => {
         return;
       }
       
-      // Mostrar mensagem de sucesso e redirecionar para login
-      setLoading(false);
-      setIsLogin(true);
-      setError(null);
+      // Salvar o email registrado para mostrar no modal
+      setRegisteredEmail(email);
+      
+      // Mostrar modal de verificação em vez de alert
+      setShowVerificationModal(true);
       
       // Limpar os campos do formulário
       setEmail('');
@@ -207,8 +210,8 @@ const Auth = () => {
       setNome('');
       setWhatsapp('');
       
-      // Mostrar mensagem de sucesso
-      alert('Conta criada com sucesso! Você já pode fazer login.');
+      setLoading(false);
+      setIsLogin(true);
     } catch (err: any) {
       console.error('Auth: Exceção durante cadastro:', err);
       setError(err.message || 'Erro desconhecido durante o cadastro');
@@ -216,18 +219,74 @@ const Auth = () => {
     }
   };
 
+  // Modal de verificação de email
+  const EmailVerificationModal = () => (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 animate-scale-up relative">
+        <button 
+          onClick={() => setShowVerificationModal(false)} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X size={20} />
+        </button>
+        
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-500 mb-4">
+            <CheckCircle size={32} />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Verifique seu email</h3>
+          <p className="text-gray-600">
+            Enviamos um link de verificação para:
+          </p>
+          <p className="font-medium text-emerald-600 mt-1 break-all">
+            {registeredEmail}
+          </p>
+        </div>
+        
+        <div className="bg-emerald-50 rounded-xl p-4 mb-6 border border-emerald-100">
+          <div className="flex space-x-3">
+            <div className="flex-shrink-0 text-emerald-500 mt-0.5">
+              <CheckCircle size={18} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-700">
+                Por favor, verifique sua caixa de entrada (e pasta de spam) e clique no link de verificação enviado para ativar sua conta. Após clicar e verificar, basta voltar aqui e fazer o login normalmente.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <button
+            onClick={() => setShowVerificationModal(false)}
+            className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl transition-colors"
+          >
+            Voltar para o login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Modal de verificação de email */}
+      {showVerificationModal && <EmailVerificationModal />}
+      
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8 animate-fade-in-down">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="bg-emerald-500 text-white p-3 rounded-xl shadow-lg shadow-emerald-500/30 animate-bounce-subtle">
-              <Zap size={32} />
+            <div className="bg-transparent p-0 rounded-xl shadow-lg shadow-emerald-500/20 animate-bounce-subtle">
+              <img 
+                src="/novas%20logos/fav-icon-digitfy-esmeralda.png" 
+                alt="DigitFy" 
+                className="w-14 h-14" 
+              />
             </div>
             <div className="flex items-baseline">
-              <h1 className="text-4xl font-bold text-emerald-800 animate-pulse-text">DigitFy</h1>
-              <span className="text-sm text-emerald-600/60 ml-0.5">.com.br</span>
+              <h1 className="text-4xl font-bold text-emerald-500 animate-pulse-text">DigitFy</h1>
+              <span className="text-xs text-emerald-500 ml-0.5">.com.br</span>
             </div>
           </div>
         </div>

@@ -21,16 +21,24 @@ const Help: React.FC = () => {
       title: "Planos e Assinaturas",
       questions: [
         {
-          q: "Como funciona o período de teste gratuito?",
+          q: "Como funciona o período de teste gratuito na DigitFy?",
           a: "Oferecemos 7 dias de teste gratuito em todos os planos. Durante este período, você tem acesso a todos os recursos do plano escolhido, sem compromisso."
         },
         {
-          q: "Posso mudar de plano a qualquer momento?",
+          q: "Posso mudar de plano a qualquer momento na DigitFy?",
           a: "Sim! Você pode fazer upgrade ou downgrade do seu plano quando quiser. As alterações são aplicadas imediatamente e o valor é ajustado proporcionalmente."
         },
         {
-          q: "Quais formas de pagamento são aceitas?",
+          q: "Quais formas de pagamento são aceitas na DigitFy?",
           a: "Aceitamos cartões de crédito, PIX e boleto bancário. Para assinaturas recorrentes, recomendamos o uso de cartão de crédito."
+        },
+        {
+          q: "Como funciona o cancelamento da assinatura na DigitFy?",
+          a: "O cancelamento pode ser feito a qualquer momento através do painel de controle. Você continuará tendo acesso aos serviços até o final do período pago."
+        },
+        {
+          q: "Existe desconto para pagamentos anuais na DigitFy?",
+          a: "Sim! Oferecemos 60% de desconto em todos os planos quando você escolhe pagar anualmente."
         }
       ]
     },
@@ -38,12 +46,16 @@ const Help: React.FC = () => {
       title: "Recursos e Funcionalidades",
       questions: [
         {
-          q: "Como faço para personalizar meu perfil?",
+          q: "Como faço para personalizar meu perfil na DigitFy?",
           a: "Acesse as configurações do seu perfil, onde você pode adicionar foto, biografia e personalizar suas preferências de notificação."
         },
         {
-          q: "Posso ter múltiplos sites?",
-          a: "Sim! Dependendo do seu plano, você pode criar e gerenciar múltiplos sites em sua conta."
+          q: "Como funciona o sistema de indicações da DigitFy?",
+          a: "Você recebe um link único de indicação. Cada pessoa que se inscrever através do seu link gera uma comissão de 50% do valor do plano escolhido."
+        },
+        {
+          q: "Quais são os recursos exclusivos do plano Elite?",
+          a: "O plano Elite inclui suporte prioritário 24/7, recursos avançados de personalização, análise detalhada de métricas e acesso antecipado a novos recursos."
         }
       ]
     },
@@ -51,12 +63,16 @@ const Help: React.FC = () => {
       title: "Suporte Técnico",
       questions: [
         {
-          q: "Quanto tempo leva para obter resposta do suporte?",
-          a: "Nossa equipe responde em até 2 horas em dias úteis. Para planos Business e Cloud, o suporte é prioritário e 24/7."
+          q: "Quanto tempo leva para obter resposta do suporte da DigitFy?",
+          a: "Nossa equipe responde em até 2 horas em dias úteis. Para planos Elite e Pro, o suporte é prioritário e 24/7."
         },
         {
-          q: "Como faço backup dos meus dados?",
-          a: "Realizamos backups automáticos diários. Você também pode fazer backups manuais a qualquer momento através do painel."
+          q: "Como posso reportar um problema técnico?",
+          a: "Você pode reportar problemas através do chat de suporte, email ou WhatsApp. Para agilizar o atendimento, inclua prints e descrições detalhadas do problema."
+        },
+        {
+          q: "Existe documentação disponível para consulta?",
+          a: "Sim! Mantemos uma base de conhecimento completa com tutoriais, guias e vídeos explicativos para ajudar você a tirar o máximo proveito da plataforma."
         }
       ]
     }
@@ -104,11 +120,11 @@ const Help: React.FC = () => {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">WhatsApp</h3>
                 <p className="text-gray-600 mb-4">
-                  Atendimento instantâneo via WhatsApp, disponível 24/7
+                  Atendimento disponível Seg - Sex das 12h às 18h
                 </p>
                 <div className="flex items-center text-sm text-emerald-600 mb-4">
                   <Clock size={16} className="mr-1" />
-                  <span>Tempo médio de resposta: 5 minutos</span>
+                  <span>Tempo médio de resposta: 5 a 30 minutos</span>
                 </div>
                 <a 
                   href="https://wa.me/SEUNUMEROAQUI" 
@@ -136,10 +152,10 @@ const Help: React.FC = () => {
                 </p>
                 <div className="flex items-center text-sm text-emerald-600 mb-4">
                   <Clock size={16} className="mr-1" />
-                  <span>Resposta em até 24 horas</span>
+                  <span>Resposta em 24 a 48 horas</span>
                 </div>
                 <a 
-                  href="mailto:suporte@digitalfy.com" 
+                  href="mailto:contato@digitfy.com.br" 
                   className="inline-flex items-center px-4 py-2 bg-white border border-emerald-200 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-all duration-300"
                 >
                   <Mail size={16} className="mr-2" />

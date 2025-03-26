@@ -29,9 +29,9 @@ const UpgradePlans: React.FC = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0 }}
-          className="mb-8 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-lg shadow-sm flex items-start gap-3"
+          className="mb-8 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-lg shadow-sm flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-3"
         >
-          <Info className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
+          <Info className="w-5 h-5 text-emerald-500 flex-shrink-0" />
           <div>
             <h3 className="font-semibold text-emerald-700 mb-1">A DigitFy é gratuita!</h3>
             <p className="text-emerald-600 text-sm">
@@ -47,9 +47,12 @@ const UpgradePlans: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-center mb-8"
         >
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
             Escolha o plano ideal para você
           </h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto mt-2 px-4">
+            Descubra recursos exclusivos que impulsionarão sua presença digital.
+          </p>
         </motion.div>
 
         {/* Seletor de período de pagamento */}
@@ -57,63 +60,82 @@ const UpgradePlans: React.FC = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mb-10 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden relative mx-auto max-w-2xl"
+          className="mb-10 bg-white rounded-xl shadow-md border border-emerald-100 p-1.5 overflow-hidden relative mx-auto max-w-md"
         >
-          <div className="flex relative">
+          <div className="relative bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-1 flex">
             {/* Indicador de seleção animado */}
             <motion.div 
-              className="absolute h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg shadow-md z-0"
+              className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-md shadow-sm z-0"
               initial={false}
-              animate={{
-                left: selectedPeriod === 'monthly' ? '0%' : selectedPeriod === 'quarterly' ? '33.33%' : '66.66%',
-                width: '33.33%'
+              animate={{ 
+                width: '33.333%', 
+                x: selectedPeriod === 'monthly' ? '0%' : 
+                   selectedPeriod === 'quarterly' ? '100%' : '200%'
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
             
             {/* Botões de período */}
             <button
               onClick={() => setSelectedPeriod('monthly')}
-              className={`flex-1 py-3 px-4 z-10 relative font-medium transition-colors duration-200 text-center ${
-                selectedPeriod === 'monthly' ? 'text-white' : 'text-gray-600 hover:text-gray-800'
+              className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                selectedPeriod === 'monthly' 
+                  ? 'text-white font-medium' 
+                  : 'text-gray-600 hover:text-emerald-700'
               }`}
             >
               Mensal
             </button>
             <button
               onClick={() => setSelectedPeriod('quarterly')}
-              className={`flex-1 py-3 px-4 z-10 relative font-medium transition-colors duration-200 text-center ${
-                selectedPeriod === 'quarterly' ? 'text-white' : 'text-gray-600 hover:text-gray-800'
+              className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                selectedPeriod === 'quarterly' 
+                  ? 'text-white font-medium' 
+                  : 'text-gray-600 hover:text-emerald-700'
               }`}
             >
-              Trimestral <span className="font-bold">-30%</span>
+              Trimestral
+              <span className={`text-xs font-bold ml-1 ${
+                selectedPeriod === 'quarterly' ? 'text-white' : 'text-emerald-500'
+              }`}>
+                -30%
+              </span>
             </button>
             <button
               onClick={() => setSelectedPeriod('yearly')}
-              className={`flex-1 py-3 px-4 z-10 relative font-medium transition-colors duration-200 text-center ${
-                selectedPeriod === 'yearly' ? 'text-white' : 'text-gray-600 hover:text-gray-800'
+              className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                selectedPeriod === 'yearly' 
+                  ? 'text-white font-medium' 
+                  : 'text-gray-600 hover:text-emerald-700'
               }`}
             >
-              Anual <span className="font-bold">-60%</span>
+              Anual
+              <span className={`text-xs font-bold ml-1 ${
+                selectedPeriod === 'yearly' ? 'text-white' : 'text-emerald-500'
+              }`}>
+                -60%
+              </span>
             </button>
           </div>
           
           {/* Mensagem informativa */}
-          <motion.div 
-            key={selectedPeriod}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="p-3 text-center text-sm bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700"
-          >
-            {selectedPeriod === 'monthly' && "Pagamento mensal sem compromisso 🔄"}
-            {selectedPeriod === 'quarterly' && "Economize 30% com o plano trimestral! 💰"}
-            {selectedPeriod === 'yearly' && "Melhor valor! Economize 60% com o plano anual! 🎉"}
-          </motion.div>
+          <div className="text-center mt-3">
+            <motion.p 
+              key={selectedPeriod}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-xs text-gray-600 bg-gradient-to-r from-emerald-50 to-teal-50 inline-block px-3 py-1.5 rounded-full border border-emerald-100"
+            >
+              {selectedPeriod === 'yearly' && '🎉 Economize 60% com o plano anual - melhor custo-benefício!'}
+              {selectedPeriod === 'quarterly' && '💰 Economize 30% com o plano trimestral.'}
+              {selectedPeriod === 'monthly' && '✓ Pagamento mensal sem compromisso de longo prazo.'}
+            </motion.p>
+          </div>
         </motion.div>
 
         {/* Cards de planos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 px-4">
           {/* Plano Básico */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -133,7 +155,7 @@ const UpgradePlans: React.FC = () => {
             </div>
             
             {/* Lista de recursos */}
-            <div className="p-5 h-[450px] overflow-y-auto border-b border-gray-200">
+            <div className="p-5 h-[350px] md:h-[450px] overflow-y-auto border-b border-gray-200">
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-emerald-500 mr-2 flex-shrink-0 mt-0.5" />
@@ -360,7 +382,11 @@ const UpgradePlans: React.FC = () => {
               <button 
                 onClick={() => {
                   if (selectedPeriod === 'monthly') {
-                    window.location.href = 'https://lastlink.com/p/CB27B7BCF/checkout-payment/';
+                    window.location.href = 'https://pay.cakto.com.br/rcznj5h_315121';
+                  } else if (selectedPeriod === 'quarterly') {
+                    window.location.href = 'https://pay.cakto.com.br/i35vhzu';
+                  } else if (selectedPeriod === 'yearly') {
+                    window.location.href = 'https://pay.cakto.com.br/347pnd2';
                   }
                 }}
                 className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
@@ -469,7 +495,11 @@ const UpgradePlans: React.FC = () => {
                 className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-colors duration-200"
                 onClick={() => {
                   if (selectedPeriod === 'monthly') {
-                    window.location.href = 'https://lastlink.com/p/CC752B3E1/checkout-payment/';
+                    window.location.href = 'https://pay.cakto.com.br/33vtgs3';
+                  } else if (selectedPeriod === 'quarterly') {
+                    window.location.href = 'https://pay.cakto.com.br/9j2agmx';
+                  } else if (selectedPeriod === 'yearly') {
+                    window.location.href = 'https://pay.cakto.com.br/be4tbqg';
                   }
                 }}
               >
@@ -515,7 +545,11 @@ const UpgradePlans: React.FC = () => {
                 className="w-full py-3 px-4 bg-purple-500 text-white font-medium rounded-lg transition-colors duration-200"
                 onClick={() => {
                   if (selectedPeriod === 'monthly') {
-                    window.location.href = 'https://lastlink.com/p/C64A61C51/checkout-payment/';
+                    window.location.href = 'https://pay.cakto.com.br/fc5vhmk';
+                  } else if (selectedPeriod === 'quarterly') {
+                    window.location.href = 'https://pay.cakto.com.br/3nnywmn';
+                  } else if (selectedPeriod === 'yearly') {
+                    window.location.href = 'https://pay.cakto.com.br/ojo545q';
                   }
                 }}
               >

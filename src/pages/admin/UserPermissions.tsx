@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Users, 
   Shield, 
@@ -17,13 +17,16 @@ import {
   UserCheck,
   AlertTriangle,
   Lock,
-  RefreshCw
+  RefreshCw,
+  FileCog
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { userService } from '../../services/userService';
 import type { UserProfile } from '../../lib/supabase';
 import type { UserPlan, UserRole } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+import { planService } from '../../services/planService';
 
 const UserPermissionsPage: React.FC = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -126,25 +129,83 @@ const UserPermissionsPage: React.FC = () => {
     setFilteredUsers(result);
   }, [searchTerm, filterPlan, users]);
 
-  // Atualizar o plano do usuário
-  const updateUserPlan = async (userId: string, newPlan: UserPlan) => {
-    if (!userId || !newPlan) return;
-
+  // Atualização do método para usar a função limpa sem referências problemáticas
+  const handlePlanUpdate = async (userId: string, newPlan: UserPlan) => {
     try {
-      // Mostrar feedback visual de processamento apenas para a atualização do plano
+      console.log('Processando atualização do plano via função limpa');
       setIsUpdatingPlan(true);
-      setErrorMessage(null);
       
-      console.log('Atualizando plano para:', newPlan);
-      const { success, error } = await userService.updateUserPlan(userId, newPlan);
+      // Verificar o plano atual primeiro para registro
+      const { plan: currentPlan } = await planService.getCurrentPlan(userId);
       
-      if (error) {
-        console.error('Erro ao atualizar plano:', error);
-        setErrorMessage(`Erro ao atualizar plano: ${error.message || 'Verifique suas permissões'}`);
+      if (currentPlan === newPlan) {
+        toast.success('Usuário já está inscrito neste plano.');
+        setIsUpdatingPlan(false);
         return;
       }
       
-      if (success) {
+      try {
+        // Usar a nova função limpa
+        console.log('Tentando atualização com função limpa...');
+        const result = await planService.updatePlanClean(userId, newPlan);
+        
+        if (result.success) {
+          // Atualizar na sessão
+          await planService.updateUserProfileInSession(userId, newPlan);
+          
+          // Sincronizar com a função limpa
+          await planService.syncPlanClean(userId);
+          
+          // Atualizar o estado local
+          setUsers(prevUsers => 
+            prevUsers.map(user => 
+              user.id === userId 
+                ? { ...user, plano: newPlan } 
+                : user
+            )
+          );
+          
+          // Se o usuário selecionado for o que está sendo atualizado, atualizar também
+          if (selectedUser && selectedUser.id === userId) {
+            setSelectedUser({ ...selectedUser, plano: newPlan });
+          }
+          
+          toast.success(`Plano do usuário atualizado com sucesso para: ${newPlan} (método limpo)`);
+          
+          // Registrar a mudança de plano para auditoria
+          if (currentPlan) {
+            await planService.logPlanChange(userId, currentPlan, newPlan, 'admin_panel_clean');
+          }
+          
+          return;
+        }
+        
+        // Se a função limpa falhar, tentar a atualização direta no banco
+        console.log('Função limpa falhou, tentando atualização direta...');
+        
+        // Atualizar diretamente no perfil
+        await planService.execute_sql_safe(`
+          UPDATE public.profiles 
+          SET plano = '${newPlan}'::user_plan, 
+              data_modificacao = NOW() 
+          WHERE id = '${userId}'
+        `);
+        
+        // Atualizar diretamente nos metadados
+        await planService.execute_sql_safe(`
+          UPDATE auth.users
+          SET raw_user_meta_data = 
+              COALESCE(raw_user_meta_data, '{}'::jsonb) || 
+              jsonb_build_object(
+                  'plano', '${newPlan}',
+                  'plano_updated_at', '${new Date().toISOString()}'
+              )
+          WHERE id = '${userId}'
+        `);
+        
+        // Atualiza também na sessão
+        await planService.updateUserProfileInSession(userId, newPlan);
+        
         // Atualizar o estado local
         setUsers(prevUsers => 
           prevUsers.map(user => 
@@ -159,65 +220,20 @@ const UserPermissionsPage: React.FC = () => {
           setSelectedUser({ ...selectedUser, plano: newPlan });
         }
         
-        // Mostrar mensagem de sucesso
-        setShowSuccessMessage(true);
-        setErrorMessage(null);
-        setTimeout(() => {
-          setShowSuccessMessage(false);
-        }, 3000);
-      } else {
-        setErrorMessage('Não foi possível atualizar o plano do usuário. Tente novamente.');
-      }
-    } catch (err) {
-      console.error('Erro ao atualizar plano:', err);
-      setErrorMessage('Ocorreu um erro ao atualizar o plano do usuário.');
-    } finally {
-      setIsUpdatingPlan(false);
-    }
-  };
-  
-  // Forçar a atualização do plano do usuário (método alternativo para casos de erro)
-  const forceUpdateUserPlan = async (userId: string, newPlan: UserPlan) => {
-    if (!userId || !newPlan) return;
-
-    try {
-      // Mostrar feedback visual de processamento
-      setIsUpdatingPlan(true);
-      setErrorMessage(null);
-      
-      console.log('Forçando atualização de plano para:', newPlan);
-      const { success, error } = await userService.forceUpdateUserPlan(userId, newPlan);
-      
-      if (error) {
-        console.error('Erro ao forçar atualização do plano:', error);
-        setErrorMessage(`Erro ao forçar atualização: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-        return;
-      }
-      
-      if (success) {
-        // Atualizar o estado local
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.id === userId 
-              ? { ...user, plano: newPlan } 
-              : user
-          )
-        );
+        toast.success(`Plano do usuário atualizado com sucesso para: ${newPlan} (SQL direto)`);
         
-        // Se o usuário selecionado for o que está sendo atualizado, atualizar também
-        if (selectedUser && selectedUser.id === userId) {
-          setSelectedUser({ ...selectedUser, plano: newPlan });
+        // Registrar a mudança de plano para auditoria
+        if (currentPlan) {
+          await planService.logPlanChange(userId, currentPlan, newPlan, 'admin_panel_direct_sql');
         }
-        
-        // Mostrar mensagem de sucesso
-        toast.success(`Plano do usuário atualizado com sucesso para: ${newPlan}`);
-        setErrorMessage(null);
-      } else {
-        setErrorMessage('Não foi possível forçar a atualização do plano. Tente novamente.');
+      } catch (error) {
+        console.error("Erro na atualização do plano:", error);
+        setErrorMessage(`Erro ao atualizar o plano: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        toast.error(`Erro ao atualizar o plano: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       }
     } catch (err) {
-      console.error('Erro ao forçar atualização do plano:', err);
-      setErrorMessage('Ocorreu um erro ao forçar a atualização do plano.');
+      console.error('Erro ao processar atualização do plano:', err);
+      toast.error('Ocorreu um erro ao processar a atualização do plano.');
     } finally {
       setIsUpdatingPlan(false);
     }
@@ -348,6 +364,24 @@ const UserPermissionsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-8">
+      {/* Adicionar botão para a página de reparo de planos */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Permissões de Usuários</h1>
+          <p className="text-gray-600">
+            Gerencie permissões, funções e planos dos usuários
+          </p>
+        </div>
+        <Link 
+          to="/admin/repair-plans"
+          className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md
+          shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+        >
+          <FileCog className="w-4 h-4 mr-2" />
+          Ferramenta de Reparo de Planos
+        </Link>
+      </div>
+
       {/* Cabeçalho da página */}
       <div className="max-w-7xl mx-auto">
         <motion.div 
@@ -663,7 +697,7 @@ const UserPermissionsPage: React.FC = () => {
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(['gratuito', 'member', 'pro', 'elite'] as UserPlan[]).map((plan) => (
+                    {(['gratuito', 'member', 'pro', 'elite'] as const).map((plan) => (
                       <button
                         key={plan}
                         type="button"
@@ -677,7 +711,7 @@ const UserPermissionsPage: React.FC = () => {
                         onClick={() => {
                           if (!isUpdatingPlan && selectedUser.plano !== plan) {
                             console.log('Clicou para mudar o plano para:', plan);
-                            updateUserPlan(selectedUser.id, plan);
+                            handlePlanUpdate(selectedUser.id, plan as UserPlan);
                           }
                         }}
                         disabled={isUpdatingPlan}
@@ -699,13 +733,13 @@ const UserPermissionsPage: React.FC = () => {
                     ))}
                   </div>
                   
-                  {/* Botão para forçar atualização do plano */}
+                  {/* Botão para forçar atualização do plano - agora é um botão de sincronização */}
                   <div className="mt-4">
                     <button
                       type="button"
                       onClick={() => {
                         if (!isUpdatingPlan && selectedUser?.id) {
-                          forceUpdateUserPlan(selectedUser.id, selectedUser.plano);
+                          handlePlanUpdate(selectedUser.id, selectedUser.plano as UserPlan);
                         }
                       }}
                       disabled={isUpdatingPlan || !selectedUser?.id}
@@ -718,10 +752,10 @@ const UserPermissionsPage: React.FC = () => {
                       `}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Forçar Sincronização do Plano
+                      Sincronizar Plano
                     </button>
                     <div className="mt-1 text-xs text-gray-500 text-center">
-                      Use esta opção apenas se o método normal falhar
+                      Força a sincronização do plano atual no sistema
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import TrendRush from './pages/TrendRush';
 import LearningChallenges from './pages/LearningChallenges';
 import CourseLesson from './pages/CourseLesson';
+import { NovidadesAdmin } from './pages/admin/NovidadesAdmin';
 
 const routes = [
   {
@@ -14,5 +15,9 @@ const routes = [
   {
     path: '/learning/course',
     element: <CourseLesson />
+  },
+  {
+    path: '/dashboard/admin/novidades',
+    element: <NovidadesAdmin />
   }
 ]; 

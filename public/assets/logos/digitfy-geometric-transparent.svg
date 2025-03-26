@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Grupo principal com margem de respiro -->
+    <g transform="translate(50, 50) scale(0.8)">
+        <!-- Hexágono externo -->
+        <path
+            d="M250 50
+               L400 150
+               L400 350
+               L250 450
+               L100 350
+               L100 150
+               Z"
+            stroke="#3B3BFC"
+            stroke-width="12"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            fill="none"
+        />
+        
+        <!-- Hexágono interno com seta -->
+        <path
+            d="M200 125
+               L300 125
+               L375 250
+               L300 375
+               L200 375
+               L275 250
+               Z"
+            stroke="#3B3BFC"
+            stroke-width="12"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            fill="none"
+        />
+        
+        <!-- Seta adicional para reforçar a direção -->
+        <path
+            d="M225 250
+               L275 250
+               M260 225
+               L275 250
+               L260 275"
+            stroke="#3B3BFC"
+            stroke-width="12"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            fill="none"
+        />
+    </g>
+</svg> 

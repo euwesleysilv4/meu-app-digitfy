@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Download } from 'lucide-react';
+import { Package, Download, RefreshCw } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -22,80 +23,77 @@ const pageVariants = {
   }
 };
 
-const freePacks = [
-  {
-    id: 1,
-    title: 'Templates Instagram',
-    description: 'Modelos prontos para marketing digital',
-    downloads: '5.2K',
-    image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 2,
-    title: 'Kit Storytelling',
-    description: 'Histórias que convertem',
-    downloads: '3.7K',
-    image: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 3,
-    title: 'Planilhas Gestão',
-    description: 'Organize sua estratégia de conteúdo',
-    downloads: '4.5K',
-    image: 'https://images.unsplash.com/photo-1600880292089-90a7ff7c1074?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 4,
-    title: 'Guia Copywriting',
-    description: 'Aprenda a escrever textos que convertem',
-    downloads: '2.9K',
-    image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 5,
-    title: 'Calendário Conteúdo',
-    description: 'Planejamento estratégico de marketing',
-    downloads: '3.3K',
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 6,
-    title: 'Análise de Métricas',
-    description: 'Entenda e otimize seus resultados digitais',
-    downloads: '2.6K',
-    image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 7,
-    title: 'Guia Afiliados',
-    description: 'Estratégias avançadas de marketing de afiliação',
-    downloads: '4.1K',
-    image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 8,
-    title: 'Kit Social Media',
-    description: 'Ferramentas completas de gestão de redes sociais',
-    downloads: '3.8K',
-    image: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 9,
-    title: 'Checklist Marketing',
-    description: 'Otimize seus processos de marketing digital',
-    downloads: '2.7K',
-    image: 'https://images.unsplash.com/photo-1600880292089-90a7ff7c1074?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  },
-  {
-    id: 10,
-    title: 'Guia Email Marketing',
-    description: 'Estratégias avançadas de conversão por e-mail',
-    downloads: '3.5K',
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-  }
-];
+// Interface para os pacotes gratuitos
+interface FreePack {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  file_url: string;
+  download_count: number;
+  file_size?: string;
+  file_type?: string;
+  tags?: string[];
+}
 
 const FreePacks = () => {
+  const [freePacks, setFreePacks] = useState<FreePack[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadFreePacks();
+  }, []);
+
+  const loadFreePacks = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Buscando pacotes gratuitos publicados do Supabase
+      const { data, error } = await supabase
+        .from('free_packs')
+        .select('*')
+        .eq('status', 'published')
+        .order('updated_at', { ascending: false });
+      
+      if (error) {
+        console.error('Erro ao carregar pacotes gratuitos:', error);
+        setError('Não foi possível carregar os pacotes gratuitos.');
+        throw error;
+      }
+      
+      setFreePacks(data || []);
+    } catch (err) {
+      console.error('Falha ao carregar pacotes gratuitos:', err);
+      setError('Ocorreu um erro ao carregar os pacotes. Tente novamente mais tarde.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async (pack: FreePack) => {
+    try {
+      // Incrementar o contador de downloads no Supabase
+      await supabase.rpc('increment_pack_download_count', { pack_id: pack.id });
+      
+      // Abrir o link do arquivo em uma nova aba
+      window.open(pack.file_url, '_blank');
+    } catch (err) {
+      console.error('Erro ao registrar download:', err);
+      // Ainda abre o link mesmo se falhar o registro do download
+      window.open(pack.file_url, '_blank');
+    }
+  };
+
+  // Formatar o número de downloads
+  const formatDownloadCount = (count: number) => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+
   return (
     <motion.div 
       initial="initial"
@@ -109,67 +107,119 @@ const FreePacks = () => {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex items-center mb-8"
+          className="flex items-center justify-between mb-8"
         >
-          <Package className="text-emerald-500 mr-3" size={32} />
-          <h1 className="text-3xl font-bold text-emerald-800">Packs Gratuitos</h1>
+          <div className="flex items-center">
+            <Package className="text-emerald-500 mr-3" size={32} />
+            <h1 className="text-3xl font-bold text-emerald-800">Pacotes Gratuitos</h1>
+          </div>
+          
+          <button 
+            onClick={loadFreePacks}
+            disabled={isLoading}
+            className="flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
+          >
+            <RefreshCw size={18} className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Atualizar</span>
+          </button>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {freePacks.map((pack, index) => (
-            <motion.div 
-              key={pack.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 0.5, 
-                delay: 0.3 + (index * 0.1) 
-              }}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">
+            {error}
+            <button 
+              onClick={loadFreePacks}
+              className="ml-4 underline hover:text-red-800"
             >
-              <div className="relative h-56 w-full">
-                <img 
-                  src={pack.image} 
-                  alt={pack.title} 
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black opacity-30"></div>
-              </div>
-              
-              <div className="p-5">
-                <h2 className="text-base font-bold text-gray-800 mb-2 h-12">
-                  {pack.title}
-                </h2>
-                <p className="text-sm text-gray-600 mb-3 h-16">
-                  {pack.description}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-emerald-600">
-                    <Download size={16} className="mr-2" />
-                    <span>{pack.downloads} Downloads</span>
-                  </div>
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <RefreshCw size={32} className="animate-spin text-emerald-600" />
+            <span className="ml-3 text-lg text-gray-700">Carregando pacotes gratuitos...</span>
+          </div>
+        ) : freePacks.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <Package size={48} className="mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum pacote gratuito disponível</h3>
+            <p className="text-gray-500">Novos pacotes gratuitos serão adicionados em breve. Volte mais tarde!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {freePacks.map((pack, index) => (
+              <motion.div 
+                key={pack.id}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: 0.3 + (index * 0.1) 
+                }}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              >
+                <div className="relative h-56 w-full">
+                  <img 
+                    src={pack.image_url} 
+                    alt={pack.title} 
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      // Imagem de fallback se a URL da imagem falhar
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Digital+Fy';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black opacity-30"></div>
                   
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="
-                      bg-emerald-500 
-                      text-white 
-                      px-4 py-2 
-                      rounded-full 
-                      text-sm 
-                      hover:bg-emerald-600 
-                      transition-colors
-                    "
-                  >
-                    Baixar
-                  </motion.button>
+                  {pack.file_type && (
+                    <div className="absolute top-3 right-3 bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded-md">
+                      {pack.file_type}
+                    </div>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                
+                <div className="p-5">
+                  <h2 className="text-base font-bold text-gray-800 mb-2 h-12 line-clamp-2">
+                    {pack.title}
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-3 h-16 line-clamp-3">
+                    {pack.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-emerald-600">
+                      <Download size={16} className="mr-2" />
+                      <span>{formatDownloadCount(pack.download_count)} Downloads</span>
+                      {pack.file_size && (
+                        <span className="ml-2 text-gray-500">• {pack.file_size}</span>
+                      )}
+                    </div>
+                    
+                    <motion.button 
+                      onClick={() => handleDownload(pack)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="
+                        bg-emerald-500 
+                        text-white 
+                        px-4 py-2 
+                        rounded-full 
+                        text-sm 
+                        hover:bg-emerald-600 
+                        transition-colors
+                        flex items-center
+                      "
+                    >
+                      <Download size={14} className="mr-1" />
+                      <span>Baixar</span>
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );

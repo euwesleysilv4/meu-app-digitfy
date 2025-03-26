@@ -55,7 +55,7 @@ const AvailableFeatures: React.FC<AvailableFeaturesProps> = ({
         {showUpgradeButton && (
           <div className="text-center mt-8">
             <button 
-              onClick={() => navigate('/upgrade-plan')} 
+              onClick={() => navigate('/dashboard/upgrade')} 
               className="inline-flex items-center px-6 py-3 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-colors"
             >
               Ver todos os planos

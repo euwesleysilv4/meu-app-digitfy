@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase, auth, UserProfile, createUserProfile, profiles, UserPlan, UserRole, UserStatus } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
+import { planService } from '../services/planService';
+import { toast } from 'react-hot-toast';
 
 interface AuthContextType {
   session: Session | null;
@@ -154,78 +156,77 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchUserProfile();
   }, [user]);
   
-  // Função para atualizar o perfil do usuário
+  // Função para pegar o perfil completo e sincronizar na sessão
   const refreshProfile = async () => {
-    if (user) {
-      try {
-        console.log('AuthContext: Atualizando perfil do usuário', { userId: user.id });
-        
-        // Log mais detalhado da consulta que será executada
-        console.log('AuthContext: Consulta SQL que será executada:', 
-          `SELECT * FROM profiles WHERE id = '${user.id}'`);
-        
-        // Tentar o método seguro primeiro
-        const { data: secureData, error: secureError } = await supabase.rpc('get_own_profile');
-        
-        let profileData = null;
-        let error = null;
-        
-        if (secureError) {
-          console.warn('AuthContext: Falha ao atualizar perfil via RPC segura:', secureError);
-          console.log('AuthContext: Tentando método padrão como fallback...');
-          
-          // Se falhar, tentar o método padrão
-          const { data: standardData, error: standardError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-            
-          profileData = standardData;
-          error = standardError;
-        } else {
-          // A função RPC retorna um conjunto de registros, então pegamos o primeiro
-          if (Array.isArray(secureData) && secureData.length > 0) {
-            profileData = secureData[0];
-          }
-        }
-        
-        if (error) {
-          console.error('AuthContext: Erro ao atualizar perfil:', error);
-          
-          // Se ambos os métodos falharem, tentar sincronizar apenas o plano
-          try {
-            const { plan, error: planError } = await profiles.syncUserPlan();
-            
-            if (!planError && plan && profile) {
-              console.log('AuthContext: Conseguiu sincronizar plano via RPC específica:', plan);
-              
-              // Atualizar apenas o plano no perfil existente
-              setProfile({
-                ...profile,
-                plano: plan as UserPlan
-              });
-              return;
-            }
-          } catch (fallbackError) {
-            console.error('AuthContext: Todas as tentativas de sincronizar perfil falharam:', fallbackError);
-          }
-          
-          return;
-        }
-        
-        if (profileData) {
-          console.log('AuthContext: Perfil do usuário atualizado:', {
-            id: profileData.id,
-            plano: profileData.plano,
-            role: profileData.role,
-            dataRecebida: JSON.stringify(profileData)
-          });
-          setProfile(profileData);
-        }
-      } catch (error) {
-        console.error('AuthContext: Exceção ao atualizar perfil:', error);
+    try {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        setProfile(null);
+        setSession(null);
+        setLoading(false);
+        console.log('AuthContext: Sem sessão ativa para atualizar');
+        return;
       }
+      
+      console.log('AuthContext: Atualizando perfil para o usuário', session.user.id);
+      
+      // Buscar dados do perfil
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error) {
+        console.error('AuthContext: Erro ao pegar o perfil', error);
+        toast.error('Erro ao atualizar seu perfil');
+        setLoading(false);
+        return;
+      }
+      
+      if (data) {
+        setProfile(data);
+        
+        // Verificar se o plano no perfil é o mesmo nos metadados do usuário
+        const authPlano = session.user.user_metadata?.plano;
+        const profilePlano = data.plano;
+        
+        console.log('AuthContext: Comparando planos', { authPlano, profilePlano });
+        
+        // Se os planos forem diferentes, sincronizar
+        if (authPlano !== profilePlano) {
+          console.log('AuthContext: Planos diferentes, sincronizando');
+          
+          try {
+            // Sincronizar o plano nos metadados do usuário
+            await planService.syncUserPlan(session.user.id);
+            
+            // Atualizar o session.user com o novo plano
+            await supabase.auth.updateUser({
+              data: { 
+                plano: profilePlano,
+                plano_updated_at: new Date().toISOString()
+              }
+            });
+            
+            console.log('AuthContext: Plano sincronizado com sucesso');
+          } catch (syncError) {
+            console.error('AuthContext: Erro ao sincronizar plano', syncError);
+          }
+        }
+      } else {
+        console.warn('AuthContext: Perfil não encontrado para o usuário', session.user.id);
+        setProfile(null);
+      }
+      
+      setSession(session);
+    } catch (error: any) {
+      console.error('AuthContext: Erro ao atualizar perfil', error);
+      toast.error('Erro ao atualizar seu perfil');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -421,6 +422,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       window.location.replace('/auth');
     }
   };
+
+  useEffect(() => {
+    // Ao iniciar, tentar sincronizar planos se houver sessão
+    const syncPlansOnStart = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        try {
+          console.log('AuthContext: Verificando sincronização de plano na inicialização');
+          planService.syncUserPlan(session.user.id)
+            .then(() => console.log('AuthContext: Plano sincronizado na inicialização'))
+            .catch(err => console.warn('AuthContext: Erro ao sincronizar plano na inicialização', err));
+        } catch (err) {
+          console.warn('AuthContext: Erro ao verificar sincronização de plano', err);
+        }
+      }
+    };
+    
+    syncPlansOnStart();
+  }, []);
 
   const value = {
     session,

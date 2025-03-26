@@ -81,7 +81,7 @@ const CurrentPlanCard: React.FC<CurrentPlanCardProps> = ({ currentPlan, classNam
               Atualize para o plano {nextPlanName} e desbloqueie ainda mais recursos!
             </p>
             <button
-              onClick={() => navigate('/upgrade-plan')}
+              onClick={() => navigate('/dashboard/upgrade')}
               className={`w-full py-2 px-4 rounded text-sm font-medium text-white flex items-center justify-center ${plan.buttonClass}`}
             >
               Atualizar meu plano

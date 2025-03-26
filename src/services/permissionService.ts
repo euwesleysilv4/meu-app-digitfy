@@ -196,19 +196,19 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     hashtagGenerator: true,
     persuasiveCopyGenerator: true,
     customCreatives: false,
-    ltvFunnel: false,
+    ltvFunnel: true,
     usefulSites: true,
     notificationSimulator: true,
     platformComparison: true,
     trendRush: true,
     digitalGames: true,
-    storytellingGenerator: false,
-    orderBumpGenerator: false,
+    storytellingGenerator: true,
+    orderBumpGenerator: true,
     // Comunidade
     whatsappGroups: true,
     discordServers: true,
     promoteCommunity: true,   // Atualizado: Divulgue sua comunidade desbloqueado
-    telegramChannels: false,
+    telegramChannels: true,
     // Aprendizado
     freeCourses: true,
     relevantContent: true,
@@ -217,7 +217,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     salesStrategy: true,
     profileStructure: true,
     freePacks: true,
-    learningChallenges: false,
+    learningChallenges: true, // Corrigido: Os desafios devem estar disponíveis para o plano Member
     submitLearningContent: true, // Nova funcionalidade: Enviar Conteúdo na Área de Aprendizado
     // Afiliados
     topAffiliates: true,
@@ -263,7 +263,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     trendRush: true,
     digitalGames: true,
     storytellingGenerator: true,
-    orderBumpGenerator: false,
+    orderBumpGenerator: true,
     // Comunidade - Todas as funções do plano Gratuito e Member
     whatsappGroups: true,
     discordServers: true,
@@ -289,7 +289,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     // Serviços de Marketing Digital - Com novas permissões específicas
     viewServices: true,
     contractServices: true,
-    viewServiceRequests: true, // Ver quem está solicitando serviços
+    viewServiceRequests: true, // Ver quem está solicitando serviços (já estava correto)
     promoteServices: true,     // Divulgar serviços
     requestServices: true,
     featuredServiceListing: false, // Não tem destaque nos serviços
@@ -395,19 +395,19 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
   hashtagGenerator: 'gratuito',
   persuasiveCopyGenerator: 'member',
   customCreatives: 'pro',
-  ltvFunnel: 'pro',
+  ltvFunnel: 'gratuito',
   usefulSites: 'gratuito',
   notificationSimulator: 'member',
   platformComparison: 'member',
   trendRush: 'member',
   digitalGames: 'member',
-  storytellingGenerator: 'pro',
-  orderBumpGenerator: 'elite',
+  storytellingGenerator: 'gratuito',
+  orderBumpGenerator: 'gratuito',
   // Comunidade
   whatsappGroups: 'gratuito',
   discordServers: 'member',
   promoteCommunity: 'elite',
-  telegramChannels: 'pro',
+  telegramChannels: 'gratuito',
   // Aprendizado
   freeCourses: 'gratuito',
   relevantContent: 'gratuito',
@@ -457,19 +457,19 @@ export const upgradeMessages: Record<FeatureKey, string> = {
   hashtagGenerator: 'Este recurso já está disponível no seu plano atual.',
   persuasiveCopyGenerator: 'Este recurso já está disponível no seu plano Member.',
   customCreatives: 'Atualize para o plano Pro para acessar criativos personalizados.',
-  ltvFunnel: 'Atualize para o plano Pro para utilizar o Funil LTV.',
+  ltvFunnel: 'Este recurso já está disponível no seu plano atual.',
   usefulSites: 'Este recurso já está disponível no seu plano atual.',
   notificationSimulator: 'Este recurso já está disponível no seu plano Member.',
   platformComparison: 'Este recurso já está disponível no seu plano Member.',
   trendRush: 'Este recurso já está disponível no seu plano Member. Limite diário: 15 áudios.',
   digitalGames: 'Este recurso já está disponível no seu plano Member.',
-  storytellingGenerator: 'Atualize para o plano Pro para criar histórias persuasivas de venda.',
-  orderBumpGenerator: 'Este recurso está disponível apenas no plano Elite. Faça upgrade para ter acesso completo a todos os recursos.',
+  storytellingGenerator: 'Este recurso já está disponível no seu plano atual.',
+  orderBumpGenerator: 'Este recurso já está disponível no seu plano atual.',
   // Comunidade
   whatsappGroups: 'Este recurso já está disponível no seu plano atual.',
   discordServers: 'Este recurso já está disponível no seu plano Member.',
   promoteCommunity: 'Este recurso está disponível apenas no plano Elite. Faça upgrade para ter acesso completo a todos os recursos.',
-  telegramChannels: 'Atualize para o plano Pro para acessar canais exclusivos no Telegram.',
+  telegramChannels: 'Este recurso já está disponível no seu plano atual.',
   // Aprendizado
   freeCourses: 'Este recurso já está disponível no seu plano atual.',
   relevantContent: 'Este recurso já está disponível no seu plano atual.',

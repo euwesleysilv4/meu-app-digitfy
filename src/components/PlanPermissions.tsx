@@ -22,8 +22,8 @@ type PermissionCategoryType = {
 const PlanPermissions: React.FC = () => {
   const { profile } = useAuth();
   const { 
-    hasFeatureAccess, 
-    getCurrentPlan, 
+    hasAccess: hasFeatureAccess, 
+    userPlan, 
     getUpgradeMessage,
     getTrendRushLimit,
     getDownloadLimit,
@@ -31,7 +31,7 @@ const PlanPermissions: React.FC = () => {
     hasUnlimitedTrendRush
   } = usePermissions();
   
-  const currentPlan = getCurrentPlan();
+  const currentPlan = userPlan;
   const planTitle = {
     gratuito: 'Plano Gratuito',
     member: 'Plano Member',

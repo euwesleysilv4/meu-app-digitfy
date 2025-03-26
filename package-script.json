@@ -1,0 +1,11 @@
+{
+  "name": "supabase-verify",
+  "version": "1.0.0",
+  "description": "Script para verificar conexão com Supabase",
+  "main": "verificar_supabase.js",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.1.0",
+    "dotenv": "^16.0.0"
+  }
+} 

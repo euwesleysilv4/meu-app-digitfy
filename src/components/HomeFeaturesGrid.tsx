@@ -35,8 +35,7 @@ const featureCategories = {
       'whatsappGenerator', 'socialProofGenerator', 'profileStructureGenerator',
       'hashtagGenerator', 'persuasiveCopyGenerator', 'storytellingGenerator',
       'orderBumpGenerator', 'customCreatives', 'ltvFunnel',
-      'usefulSites', 'notificationSimulator', 'platformComparison',
-      'digitalGames'
+      'usefulSites', 'notificationSimulator', 'platformComparison'
     ] as FeatureKey[]
   },
   trendRush: {

@@ -9,7 +9,7 @@ import Community from './pages/Community';
 import News from './pages/News';
 import Tools from './pages/Tools';
 import Links from './pages/Links';
-import Members from './pages/Members';
+import Members from './pages/members/Members';
 import Help from './pages/Help';
 import Share from './pages/Share';
 import RecommendedProducts from './pages/RecommendedProducts';
@@ -27,9 +27,6 @@ import UsefulSites from './pages/UsefulSites';
 import NotificationSimulator from './pages/NotificationSimulator';
 import PlatformComparison from './pages/PlatformComparison';
 import TopAffiliates from './pages/TopAffiliates';
-import BestSellers from './pages/BestSellers';
-import MostAffiliates from './pages/MostAffiliates';
-import MostComplete from './pages/MostComplete';
 import FreeCourses from './pages/FreeCourses';
 import RelevantContent from './pages/RelevantContent';
 import EbooksPdfs from './pages/EbooksPdfs';
@@ -64,11 +61,37 @@ import PlanPermissions from './components/PlanPermissions';
 import { usePermissions } from './services/permissionService';
 import SubmitProduct from './pages/SubmitProduct';
 import Dashboard from './pages/Dashboard';
+import AdminSettings from './pages/admin/Settings';
+import ProductsManagement from './pages/admin/ProductsManagement';
+import AdminContent from './pages/admin/Content';
+import AdminTools from './pages/admin/Tools';
+import AdminEbooks from './pages/admin/Ebooks';
+import EbookSuggestions from './pages/admin/EbookSuggestions';
+import AdminMindMaps from './pages/admin/MindMaps';
+import AdminSalesStrategies from './pages/admin/SalesStrategies';
+import AdminFreePacks from './pages/admin/FreePacks';
+import PublicLayout from './components/PublicLayout';
+import TrendRushAdmin from './pages/admin/TrendRushAdmin';
+import TopAfiliadosAdmin from './pages/admin/TopAfiliados';
+import TestimonialGalleryAdmin from './pages/admin/TestimonialGallery';
+import CommunityManagement from './pages/admin/CommunityManagement';
+import ServiceManagement from './pages/admin/ServiceManagement';
+import { NovidadesAdmin } from './pages/admin/NovidadesAdmin';
+import PlayersManagement from './pages/admin/PlayersManagement';
+import TutorialVideosPage from './pages/admin/tutorial-videos';
+import BannerManagement from './pages/admin/BannerManagement';
+import ChallengesAdmin from './pages/admin/ChallengesAdmin';
+import RepairPlansPage from './pages/admin/RepairPlans';
+import AffiliateVideos from './pages/admin/AffiliateVideos';
 
 // Lazy load dos novos componentes
 const DashboardTrendRush = lazy(() => import('./pages/dashboard/tools/trend-rush'));
-const DashboardServices = lazy(() => import('./pages/dashboard/services/index'));
-const ServiceRequests = lazy(() => import('./pages/dashboard/services/requests'));
+const AffiliateProductsAdmin = lazy(() => import('../app/admin/affiliate-products/AffiliateProductsAdmin'));
+
+// Imports temporários para as páginas que ainda serão criadas
+const MindMapPageTemp = () => <div>Mapas Mentais</div>;
+const AboutTemp = () => <div>Sobre Nós</div>;
+const ContactTemp = () => <div>Contato</div>;
 
 // Componente para rotas protegidas
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -95,47 +118,46 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Componente para rotas de administrador específico
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!session) {
-        setIsChecking(false);
+        navigate('/auth');
         return;
       }
-      
+
       try {
-        const { isAdmin, error } = await userService.isSpecificAdmin();
+        const { isAdmin: adminStatus, error } = await userService.isSpecificAdmin();
         
         if (error) {
-          console.error('Erro ao verificar status de administrador:', error);
+          console.error('AdminRoute: Erro ao verificar status de administrador:', error);
+          setError('Erro ao verificar permissões de administrador');
           setIsAdmin(false);
-          setIsChecking(false);
           return;
         }
+
+        setIsAdmin(adminStatus);
         
-        setIsAdmin(isAdmin);
-        setIsChecking(false);
-        
-        if (!isAdmin) {
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1000);
+        if (!adminStatus) {
+          setError('Você não tem permissões de administrador para acessar esta página');
         }
       } catch (err) {
-        console.error('Erro ao verificar status de administrador:', err);
+        console.error('AdminRoute: Exceção ao verificar status de administrador:', err);
+        setError('Erro ao verificar suas permissões');
         setIsAdmin(false);
-        setIsChecking(false);
       }
     };
     
-    checkAdminStatus();
-  }, [session, navigate]);
+    if (!loading) {
+      checkAdminStatus();
+    }
+  }, [session, loading, navigate]);
   
-  // Mostrar um indicador de carregamento enquanto verifica as permissões
-  if (loading || isChecking) {
+  // Mostra loading enquanto verifica
+  if (loading || isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-emerald-50">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
@@ -143,13 +165,17 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // Redirecionar para a página de login se não estiver autenticado
+  // Redireciona para login se não houver sessão
   if (!session) {
     return <Navigate to="/auth" replace />;
   }
   
-  // Redirecionar para o dashboard se não for o administrador específico
-  if (!isAdmin) {
+  // Se não for admin ou houver erro, mostra mensagem e redireciona
+  if (!isAdmin || error) {
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 3000);
+    
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-emerald-50 p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
@@ -159,9 +185,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Acesso Restrito</h1>
-          <p className="text-gray-600 mt-2">
-            Você não tem permissões para acessar esta área. Apenas o administrador autorizado pode acessar.
-          </p>
+          <p className="text-gray-600 mt-2">{error || 'Você não tem permissões de administrador para acessar esta página'}</p>
           <p className="text-gray-500 mt-4 text-sm">
             Redirecionando para o dashboard...
           </p>
@@ -170,7 +194,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // Renderizar as rotas de administrador se estiver autorizado
+  // Se chegou aqui, é admin e pode acessar a rota
   return <>{children}</>;
 };
 
@@ -211,9 +235,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rotas públicas com Layout */}
+        {/* Rotas públicas com Layout normal (login/cadastro) */}
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
           <Route path="auth" element={<Auth />} />
           <Route path="reset-password" element={<ResetPassword />} />
           
@@ -221,6 +244,20 @@ function App() {
           {session && (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           )}
+          
+          {/* Rota inicial para usuários não logados dentro do layout principal */}
+          {!session && (
+            <Route index element={<Home />} />
+          )}
+        </Route>
+
+        {/* Rotas públicas com PublicLayout - apenas para páginas totalmente públicas que não precisam do Layout principal */}
+        <Route element={<PublicLayout />}>
+          {/* Removido rota index para não conflitar com a nova rota home dentro do Layout */}
+          <Route path="sobre" element={<AboutTemp />} />
+          <Route path="contato" element={<ContactTemp />} />
+          <Route path="mapas-mentais/:id?" element={<MindMapPageTemp />} />
+          <Route path="estrategias-vendas/:id?" element={<SalesStrategy />} />
         </Route>
 
         {/* Rotas protegidas com Layout */}
@@ -384,9 +421,6 @@ function App() {
           } />
           <Route path="affiliate" element={<Affiliate />} />
           <Route path="affiliate/top" element={<TopAffiliates />} />
-          <Route path="affiliate/best-sellers" element={<BestSellers />} />
-          <Route path="affiliate/most-affiliates" element={<MostAffiliates />} />
-          <Route path="affiliate/most-complete" element={<MostComplete />} />
           <Route path="learning" element={<Learning />} />
           <Route path="learning/free-courses" element={<FreeCourses />} />
           <Route path="learning/relevant-content" element={<RelevantContent />} />
@@ -513,20 +547,6 @@ function App() {
               <RequestService />
             </FeatureGate>
           } />
-          <Route path="services" element={
-            <FeatureGate featureKey="viewServices">
-              <Suspense fallback={<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div></div>}>
-                <DashboardServices />
-              </Suspense>
-            </FeatureGate>
-          } />
-          <Route path="services/requests" element={
-            <PermissionRoute featureKey="viewServiceRequests">
-              <Suspense fallback={<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div></div>}>
-                <ServiceRequests />
-              </Suspense>
-            </PermissionRoute>
-          } />
           <Route path="tools/storytelling-generator" element={
             <FeatureGate featureKey="storytellingGenerator">
               <StorytellingGenerator />
@@ -543,17 +563,48 @@ function App() {
             </FeatureGate>
           } />
           <Route path="feed" element={<Feed />} />
-          <Route path="admin/user-permissions" element={
+          <Route path="admin" element={<ProtectedRoute><Navigate to="/admin/dashboard" replace /></ProtectedRoute>} />
+          <Route path="admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+          <Route path="admin/user-permissions" element={<AdminRoute><UserPermissionsPage /></AdminRoute>} />
+          <Route path="admin/permissions" element={<AdminRoute><UserPermissionsPage /></AdminRoute>} />
+          <Route path="admin/products" element={<AdminRoute><ProductsManagement /></AdminRoute>} />
+          <Route path="admin/tutorial-videos" element={<AdminRoute><TutorialVideosPage /></AdminRoute>} />
+          <Route path="admin/affiliate-products" element={
             <AdminRoute>
-              <UserPermissionsPage />
+              <Suspense fallback={<div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
+              </div>}>
+                <AffiliateProductsAdmin />
+              </Suspense>
             </AdminRoute>
           } />
-          <Route path="admin/dashboard" element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
+          <Route path="admin/content" element={<AdminRoute><AdminContent /></AdminRoute>} />
+          <Route path="admin/tools" element={<AdminRoute><AdminTools /></AdminRoute>} />
+          <Route path="admin/ebooks" element={<AdminRoute><AdminEbooks /></AdminRoute>} />
+          <Route path="admin/ebook-suggestions" element={<AdminRoute><EbookSuggestions /></AdminRoute>} />
+          <Route path="admin/mind-maps" element={<AdminRoute><AdminMindMaps /></AdminRoute>} />
+          <Route path="admin/sales-strategies" element={<AdminRoute><AdminSalesStrategies /></AdminRoute>} />
+          <Route path="admin/free-packs" element={<AdminRoute><AdminFreePacks /></AdminRoute>} />
+          <Route path="admin/trend-rush" element={<AdminRoute><TrendRushAdmin /></AdminRoute>} />
+          <Route path="admin/top-afiliados" element={<AdminRoute><TopAfiliadosAdmin /></AdminRoute>} />
+          <Route path="admin/top-affiliates" element={<AdminRoute><TopAfiliadosAdmin /></AdminRoute>} />
+          <Route path="admin/testimonial-gallery" element={<AdminRoute><TestimonialGalleryAdmin /></AdminRoute>} />
+          <Route path="admin/testimonials" element={<AdminRoute><TestimonialGalleryAdmin /></AdminRoute>} />
+          <Route path="admin/community-management" element={<AdminRoute><CommunityManagement /></AdminRoute>} />
+          <Route path="admin/service-management" element={<AdminRoute><ServiceManagement /></AdminRoute>} />
+          <Route path="admin/novidades" element={<AdminRoute><NovidadesAdmin /></AdminRoute>} />
+          <Route path="admin/players" element={<AdminRoute><PlayersManagement /></AdminRoute>} />
+          <Route path="admin/banner-management" element={<AdminRoute><BannerManagement /></AdminRoute>} />
+          <Route path="admin/challenges" element={<AdminRoute><ChallengesAdmin /></AdminRoute>} />
+          <Route path="admin/affiliate-videos" element={<AdminRoute><AffiliateVideos /></AdminRoute>} />
+          <Route path="admin/users" element={<UserPermissionsPage />} />
+          <Route path="admin/repair-plans" element={<RepairPlansPage />} />
         </Route>
+        
+        {/* Redirecionamento para garantir compatibilidade com o link no Dashboard */}
+        <Route path="/dashboard/dashboard/admin/testimonial-gallery" element={<Navigate to="/dashboard/admin/testimonial-gallery" replace />} />
+        <Route path="/dashboard/dashboard/admin/community-management" element={<Navigate to="/dashboard/admin/community-management" replace />} />
 
         {/* Redirecionar qualquer rota não encontrada para a página inicial */}
         <Route path="*" element={<Navigate to="/" replace />} />

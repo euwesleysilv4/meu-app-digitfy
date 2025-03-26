@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fundo verde esmeralda arredondado -->
+    <rect width="600" height="200" rx="20" fill="#10B981"/>
+    
+    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" 
+        font-family="Inter, system-ui, sans-serif" font-size="100" font-weight="700" 
+        class="text-2xl font-bold tracking-tight">
+        <tspan fill="#FFFFFF">DigitFy</tspan>
+    </text>
+</svg> 

@@ -1,42 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Lock, Instagram, Music } from 'lucide-react';
+import { TrendingUp, Lock, Instagram, Music, Star, AlertCircle, Download } from 'lucide-react';
 import { usePermissions } from '../../services/permissionService';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 
-// Interface para representar cada item de áudio
-interface TrendAudio {
+// Interface para representar cada item de áudio do banco de dados
+interface TrendRushItem {
   id: string;
   title: string;
-  artist: string;
-  views: number;
-  growth: number;
-  platform: 'instagram' | 'tiktok';
-  audioUrl: string;
-  thumbnailUrl: string;
+  description: string | null;
+  audio_url: string;
+  image_url: string | null;
+  status: 'published' | 'draft' | 'archived';
+  platform: 'tiktok' | 'instagram' | 'both';
+  artist: string | null;
+  tags: string[] | null;
+  is_featured: boolean;
+  view_count: number;
+  priority: number;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
 }
 
 // Props do componente
 interface TrendRushListProps {
   platform?: 'instagram' | 'tiktok' | 'all';
-  initialData?: TrendAudio[];
+  initialData?: TrendRushItem[];
 }
 
 const TrendRushList: React.FC<TrendRushListProps> = ({ 
   platform = 'all',
   initialData = []
 }) => {
-  const [trendingAudios, setTrendingAudios] = useState<TrendAudio[]>(initialData);
+  const [trendingAudios, setTrendingAudios] = useState<TrendRushItem[]>(initialData);
   const [loading, setLoading] = useState(initialData.length === 0);
   const [currentAudio, setCurrentAudio] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const { getTrendRushLimit, hasAccess, userPlan } = usePermissions();
   const navigate = useNavigate();
   
   const audioLimit = getTrendRushLimit();
   const hasTrendRushAccess = hasAccess('trendRush');
 
-  // Simula a busca de dados
+  // Buscar dados do Supabase
   useEffect(() => {
     if (initialData.length > 0) {
       setTrendingAudios(initialData);
@@ -47,29 +56,47 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
     const fetchTrendingAudios = async () => {
       setLoading(true);
       try {
-        // Simulando chamada de API
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Dados simulados para demonstração
-        const mockData: TrendAudio[] = Array(30).fill(0).map((_, index) => ({
-          id: `audio-${index}`,
-          title: `Áudio Trending ${index + 1}`,
-          artist: `Artista ${Math.floor(index / 3) + 1}`,
-          views: Math.floor(Math.random() * 900000) + 100000,
-          growth: Math.floor(Math.random() * 350) + 50,
-          platform: index % 2 === 0 ? 'instagram' : 'tiktok',
-          audioUrl: '#',
-          thumbnailUrl: `https://picsum.photos/200/200?random=${index}`
-        }));
-        
+        // Montando a query baseado na plataforma selecionada
+        let query = supabase
+          .from('trend_rush')
+          .select('*')
+          .eq('status', 'published')
+          .order('priority', { ascending: true });
+
         // Filtrar por plataforma se necessário
-        const filteredData = platform === 'all' 
-          ? mockData 
-          : mockData.filter(audio => audio.platform === platform);
+        if (platform !== 'all') {
+          query = query.or(`platform.eq.${platform},platform.eq.both`);
+        }
+
+        const { data, error } = await query;
         
-        setTrendingAudios(filteredData);
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setTrendingAudios(data);
+        }
       } catch (error) {
         console.error('Erro ao buscar áudios em tendência:', error);
+        // Em caso de erro, usando dados simulados como fallback
+        const mockData: TrendRushItem[] = Array(5).fill(0).map((_, index) => ({
+          id: `audio-${index}`,
+          title: `Áudio Trending ${index + 1}`,
+          description: `Descrição do áudio ${index + 1}`,
+          audio_url: '#',
+          image_url: `https://picsum.photos/200/200?random=${index}`,
+          status: 'published',
+          platform: index % 2 === 0 ? 'instagram' : 'tiktok',
+          artist: `Artista ${Math.floor(index / 3) + 1}`,
+          tags: ['trending', 'viral'],
+          is_featured: index === 0,
+          view_count: Math.floor(Math.random() * 900000) + 100000,
+          priority: index + 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+        setTrendingAudios(mockData);
       } finally {
         setLoading(false);
       }
@@ -78,13 +105,61 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
     fetchTrendingAudios();
   }, [platform, initialData]);
 
+  // Controlar reprodução do áudio
+  useEffect(() => {
+    return () => {
+      // Limpa o áudio ao desmontar o componente
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+      }
+    };
+  }, [audioElement]);
+
   // Toggle de reprodução do áudio
-  const togglePlay = (audioId: string) => {
-    if (currentAudio === audioId) {
-      setIsPlaying(!isPlaying);
+  const togglePlay = (audio: TrendRushItem) => {
+    // Incrementar a contagem de visualizações
+    incrementViewCount(audio.id);
+    
+    if (currentAudio === audio.id) {
+      if (audioElement) {
+        if (isPlaying) {
+          audioElement.pause();
+        } else {
+          audioElement.play();
+        }
+        setIsPlaying(!isPlaying);
+      }
     } else {
-      setCurrentAudio(audioId);
-      setIsPlaying(true);
+      if (audioElement) {
+        audioElement.pause();
+      }
+      
+      const newAudio = new Audio(audio.audio_url);
+      newAudio.addEventListener('canplaythrough', () => {
+        newAudio.play();
+        setIsPlaying(true);
+        setCurrentAudio(audio.id);
+        setAudioElement(newAudio);
+      });
+      
+      newAudio.addEventListener('error', (e) => {
+        console.error('Erro ao carregar o áudio:', e);
+        alert('Não foi possível reproduzir este áudio. Por favor, tente novamente mais tarde.');
+      });
+      
+      newAudio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+    }
+  };
+
+  // Incrementar a contagem de visualizações
+  const incrementViewCount = async (audioId: string) => {
+    try {
+      await supabase.rpc('increment_trend_rush_view_count', { trend_rush_id: audioId });
+    } catch (error) {
+      console.error('Erro ao incrementar contagem de visualizações:', error);
     }
   };
 
@@ -101,7 +176,11 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
   // Filtrar os áudios com base no limite do plano
   const limitedAudios = userPlan === 'gratuito' 
     ? trendingAudios.slice(0, audioLimit)
-    : trendingAudios;
+    : userPlan === 'member'
+      ? trendingAudios.slice(0, audioLimit)
+      : userPlan === 'pro'
+        ? trendingAudios.slice(0, audioLimit)
+        : trendingAudios; // Plano Elite tem acesso a todos
 
   if (loading) {
     return (
@@ -110,6 +189,20 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-gray-600">Carregando áudios em tendência...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (trendingAudios.length === 0) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+        <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-amber-800 mb-2">
+          Nenhum áudio disponível
+        </h3>
+        <p className="text-amber-700">
+          Não encontramos áudios em tendência no momento. Por favor, tente novamente mais tarde.
+        </p>
       </div>
     );
   }
@@ -142,7 +235,7 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
                 <TrendingUp className="h-5 w-5 text-amber-500 flex-shrink-0" />
                 <div>
                   <p className="text-amber-700">
-                    <span className="font-semibold">Visualização limitada:</span> No plano gratuito você tem acesso a apenas 5 áudios por dia. 
+                    <span className="font-semibold">Visualização limitada:</span> No plano gratuito você tem acesso a apenas {audioLimit} áudios por dia. 
                     <button 
                       onClick={() => navigate('/upgrade-plan')}
                       className="ml-1 text-emerald-600 hover:text-emerald-700 font-medium"
@@ -161,7 +254,7 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
                 <TrendingUp className="h-5 w-5 text-blue-500 flex-shrink-0" />
                 <div>
                   <p className="text-blue-700">
-                    <span className="font-semibold">Limite de áudios:</span> No plano Member você tem acesso a 10 áudios por dia.
+                    <span className="font-semibold">Limite de áudios:</span> No plano Member você tem acesso a {audioLimit} áudios por dia.
                     <button 
                       onClick={() => navigate('/upgrade-plan')}
                       className="ml-1 text-emerald-600 hover:text-emerald-700 font-medium"
@@ -180,7 +273,7 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
                 <TrendingUp className="h-5 w-5 text-indigo-500 flex-shrink-0" />
                 <div>
                   <p className="text-indigo-700">
-                    <span className="font-semibold">Limite de áudios:</span> No plano Pro você tem acesso a 15 áudios por dia.
+                    <span className="font-semibold">Limite de áudios:</span> No plano Pro você tem acesso a {audioLimit} áudios por dia.
                     <button 
                       onClick={() => navigate('/upgrade-plan')}
                       className="ml-1 text-emerald-600 hover:text-emerald-700 font-medium"
@@ -210,7 +303,7 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="divide-y divide-gray-200"
           >
             {limitedAudios.map((audio, index) => (
               <motion.div
@@ -218,94 +311,87 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                className="py-4 flex flex-col sm:flex-row items-start sm:items-center hover:bg-gray-50 rounded-lg px-3 sm:px-4 transition-colors"
               >
-                <div className="relative aspect-square overflow-hidden">
-                  <img 
-                    src={audio.thumbnailUrl} 
-                    alt={audio.title}
-                    className="w-full h-full object-cover transition-transform hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                    <div className="absolute top-2 right-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-white flex items-center gap-1">
-                      {audio.platform === 'instagram' ? (
-                        <Instagram className="h-3 w-3" />
-                      ) : (
-                        <Music className="h-3 w-3" />
-                      )}
-                      {audio.platform}
-                    </div>
-                    <h3 className="text-white font-semibold truncate">{audio.title}</h3>
-                    <p className="text-white/80 text-sm">{audio.artist}</p>
-                  </div>
-                  <button
-                    onClick={() => togglePlay(audio.id)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity"
+                <div className="flex items-center w-full sm:w-auto">
+                  <div 
+                    className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-lg overflow-hidden flex-shrink-0 mr-3 cursor-pointer"
+                    onClick={() => togglePlay(audio)}
                   >
-                    <div className="bg-emerald-500 text-white p-4 rounded-full">
+                    <img 
+                      src={audio.image_url || `https://placehold.co/400x400/${index % 2 === 0 ? '22C55E' : '8B5CF6'}/FFFFFF?text=${index+1}`} 
+                      alt={audio.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                       {currentAudio === audio.id && isPlaying ? (
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" />
-                          <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" />
+                          <rect x="6" y="5" width="4" height="14" rx="1" fill="white" />
+                          <rect x="14" y="5" width="4" height="14" rx="1" fill="white" />
                         </svg>
                       ) : (
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8 5V19L19 12L8 5Z" fill="currentColor" />
+                          <path d="M8 5V19L19 12L8 5Z" fill="white" />
                         </svg>
                       )}
                     </div>
-                  </button>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-medium text-gray-900 truncate pr-2">{audio.title}</h3>
+                    <p className="text-sm text-gray-500">{audio.artist || 'Artista desconhecido'}</p>
+                  </div>
+
+                  {audio.is_featured && (
+                    <div className="sm:hidden ml-auto">
+                      <div className="bg-yellow-400 rounded-full px-2 py-0.5 text-xs text-black flex items-center gap-1 whitespace-nowrap">
+                        <Star className="h-3 w-3" />
+                        Destaque
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="p-4">
-                  <div className="flex justify-between items-center">
-                    <div className="text-gray-600 text-sm">
-                      {formatViews(audio.views)} visualizações
-                    </div>
-                    <div className="flex items-center gap-1 text-emerald-600 font-medium text-sm">
-                      <TrendingUp className="h-4 w-4" />
-                      +{audio.growth}%
-                    </div>
+                
+                <div className="flex justify-between items-center w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto">
+                  <div className="flex flex-wrap gap-1 max-w-[60%] sm:max-w-none">
+                    {audio.tags?.slice(0, 2).map((tag, idx) => (
+                      <span key={idx} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {audio.is_featured && (
+                      <div className="hidden sm:block">
+                        <div className="bg-yellow-400 rounded-full px-2 py-0.5 text-xs text-black flex items-center gap-1 whitespace-nowrap">
+                          <Star className="h-3 w-3" />
+                          Destaque
+                        </div>
+                      </div>
+                    )}
+                    <a
+                      href={audio.audio_url}
+                      download
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium px-2 sm:px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        incrementViewCount(audio.id);
+                      }}
+                    >
+                      {audio.platform === 'instagram' ? (
+                        <Instagram size={14} />
+                      ) : audio.platform === 'tiktok' ? (
+                        <Music size={14} />
+                      ) : (
+                        <Music size={14} />
+                      )}
+                      Usar Áudio
+                    </a>
                   </div>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-
-          {userPlan === 'gratuito' && trendingAudios.length > audioLimit && (
-            <div className="mt-8 text-center p-6 bg-gray-50 rounded-xl border border-gray-100">
-              <Lock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                Mais {trendingAudios.length - audioLimit} áudios disponíveis
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Faça upgrade do seu plano para desbloquear mais áudios em tendência por dia.
-              </p>
-              <button
-                onClick={() => navigate('/upgrade-plan')}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg transition-colors"
-              >
-                Fazer Upgrade
-              </button>
-            </div>
-          )}
-
-          {userPlan === 'member' && trendingAudios.length > audioLimit && (
-            <div className="mt-8 text-center p-6 bg-gray-50 rounded-xl border border-gray-100">
-              <Lock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                Mais {trendingAudios.length - audioLimit} áudios disponíveis
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Faça upgrade para o plano Pro para obter acesso ilimitado aos áudios em tendência.
-              </p>
-              <button
-                onClick={() => navigate('/upgrade-plan')}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg transition-colors"
-              >
-                Upgrade para o Plano Pro
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>

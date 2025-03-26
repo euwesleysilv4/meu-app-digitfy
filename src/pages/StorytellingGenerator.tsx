@@ -380,38 +380,41 @@ const StorytellingGenerator = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={generateStory}
-                  className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 p-3 rounded-lg flex items-center justify-center"
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={generateStory}
+                  className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300"
                 >
-                  <Wand2 className="mr-2" /> Gerar Básico
+                  <Wand2 className="w-4 h-4 mr-2" /> 
+                  <span className="font-medium">Gerar Básico</span>
                 </motion.button>
 
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={generateStoryWithAI}
                   disabled={isGeneratingAI}
-                  className={`w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-3 rounded-lg flex items-center justify-center ${
-                    isGeneratingAI ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'
+                  className={`w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                    isGeneratingAI ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-lg hover:from-emerald-600 hover:to-teal-600'
                   }`}
                 >
                   {isGeneratingAI ? (
                     <>
-                      <Loader2 className="mr-2 animate-spin" /> Gerando...
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> 
+                      <span className="font-medium">Gerando...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2" /> Deepseek V3
+                      <Sparkles className="w-4 h-4 mr-2" /> 
+                      <span className="font-medium">Deepseek V3</span>
                     </>
                   )}
-              </motion.button>
+                </motion.button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center mt-1">
+              <p className="text-xs text-gray-500 text-center mt-2">
                 Esta ferramenta é apenas uma ajuda inicial. Para usos mais avançados da IA, 
                 visite o <a href="https://platform.deepseek.com" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">site oficial da Deepseek</a>.
               </p>
@@ -466,9 +469,9 @@ const StorytellingGenerator = () => {
                     Deepseek
                   </a> e continue aprimorando este texto.
                 </p>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
         )}
 
         {generatedStory && (

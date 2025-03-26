@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, User, Menu, Zap, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { User, Menu, Zap, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavbarProps {
@@ -76,8 +76,12 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }: NavbarProps) => {
               <Menu size={24} />
             </button>
             <Link to="/" className="flex items-center space-x-2 group">
-              <div className="hidden sm:block bg-white p-2 rounded-lg transform transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
-                <Zap size={24} className="text-emerald-500 transition-all duration-300 group-hover:text-emerald-600" />
+              <div className="hidden sm:block bg-white p-1 rounded-lg transform transition-all duration-300 group-hover:rotate-12 group-hover:scale-110">
+                <img 
+                  src="/novas%20logos/fav-icon-digitfy.png" 
+                  alt="DigitFy" 
+                  className="w-7 h-7 transition-all duration-300" 
+                />
               </div>
               <div className="flex items-baseline">
                 <span className="text-2xl font-bold text-white tracking-tight transition-all duration-300 group-hover:scale-105">DigitFy</span>
@@ -90,18 +94,6 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }: NavbarProps) => {
             {session ? (
               // Usuário logado - Mostrar notificações e menu de perfil
               <>
-                <button className="text-white hover:text-emerald-100 transition-all duration-300 relative group hover:scale-110">
-                  <div className="relative">
-                    <Bell size={22} className="transform transition-all duration-300 group-hover:rotate-12" />
-                    <span className="absolute -top-1 -right-1 bg-white text-emerald-500 text-xs w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                      3
-                    </span>
-                  </div>
-                  <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-white text-emerald-600 text-sm py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg whitespace-nowrap">
-                    Notificações
-                  </span>
-                </button>
-                
                 {/* Menu do Usuário */}
                 <div className="relative" ref={userMenuRef}>
                   <button 

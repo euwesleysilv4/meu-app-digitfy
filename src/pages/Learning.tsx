@@ -1,12 +1,103 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ChevronLeft, ChevronRight, PlayCircle, Clock, Star, ArrowRight, Sparkles, Zap, Award, FileText, X, Upload, Lock, Check } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, PlayCircle, Clock, Star, ArrowRight, Sparkles, Zap, Award, FileText, X, Upload, Lock, Check, Download, Map, DollarSign, Package, Bookmark } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../services/permissionService';
 import { DefaultLayout } from '../components/layouts/DefaultLayout';
+import { supabase } from '../lib/supabaseClient';
+
+// Defina interfaces para os diferentes tipos de conteúdo
+interface Course {
+  id: number | string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  lessons: number;
+  duration: string;
+  instructor: string;
+  content?: string;
+}
+
+interface Ebook {
+  id: number | string;
+  title: string;
+  description: string;
+  cover_image_url?: string;
+  coverImage?: string;
+  file_size?: string;
+  fileSize?: string;
+  file_type?: string;
+  category?: string;
+  tags?: string[];
+}
+
+interface MindMap {
+  id: number | string;
+  title: string;
+  description: string;
+  image_url?: string;
+  image?: string;
+  download_count?: number;
+  downloads?: number;
+}
+
+interface SalesStrategy {
+  id: number | string;
+  title: string;
+  description: string;
+  image_url?: string;
+  image?: string;
+  read_time?: string;
+  readTime?: string;
+}
+
+interface FreePack {
+  id: number | string;
+  title: string;
+  description: string;
+  image_url?: string;
+  image?: string;
+  items_count?: number;
+  items?: number;
+}
 
 const Learning = () => {
+  // Dados de cursos fictícios para fallback
+  const courses: Course[] = [
+    {
+      id: 1,
+      title: 'Marketing Digital Pro',
+      description: 'Aprenda estratégias avançadas de marketing digital',
+      image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=300&h=400',
+      category: 'Marketing',
+      lessons: 42,
+      duration: '12h',
+      instructor: 'André Victor'
+    },
+    {
+      id: 2,
+      title: 'SEO Avançado',
+      description: 'Domine as técnicas de otimização para mecanismos de busca',
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=300&h=400',
+      category: 'SEO',
+      lessons: 35,
+      duration: '8h',
+      instructor: 'Thomas Macedo'
+    },
+    {
+      id: 3,
+      title: 'Copywriting Persuasivo',
+      description: 'Aprenda a escrever textos que vendem',
+      image: 'https://images.unsplash.com/photo-1455849318743-b2233052fcff?auto=format&fit=crop&q=80&w=300&h=400',
+      category: 'Copywriting',
+      lessons: 28,
+      duration: '6h',
+      instructor: 'Álvaro Ezequiel'
+    }
+  ];
+
   // Estado para rastrear categorias ativas
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -34,6 +125,20 @@ const Learning = () => {
   
   // Logs para diagnóstico
   console.log("Pode enviar conteúdo:", canSubmitContent);
+  
+  // Estados para armazenar os dados reais
+  const [realCourses, setRealCourses] = useState<Course[]>([]);
+  const [realEbooks, setRealEbooks] = useState<Ebook[]>([]);
+  const [realMindMaps, setRealMindMaps] = useState<MindMap[]>([]);
+  const [realSalesStrategies, setRealSalesStrategies] = useState<SalesStrategy[]>([]);
+  const [realFreePacks, setRealFreePacks] = useState<FreePack[]>([]);
+  const [loading, setLoading] = useState({
+    courses: true,
+    ebooks: true,
+    mindMaps: true,
+    salesStrategies: true,
+    freePacks: true
+  });
   
   // Handler para o botão de enviar conteúdo
   const handleSubmitContent = () => {
@@ -152,275 +257,207 @@ const Learning = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Dados de cursos (expandido)
-  const courses = [
-    {
-      id: 1,
-      title: 'Marketing Digital Pro',
-      description: 'Aprenda estratégias avançadas de marketing digital',
-      image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      lessons: 42,
-      duration: '12h',
-      instructor: 'André Victor',
-      content: `
-        <h2>Marketing Digital Pro</h2>
-        <p>Bem-vindo ao curso completo de Marketing Digital Pro! Neste curso, você aprenderá estratégias avançadas que são utilizadas pelos melhores profissionais do mercado.</p>
-        
-        <h3>O que você vai aprender:</h3>
-        <ul>
-          <li>Estratégias de SEO avançadas</li>
-          <li>Marketing de conteúdo que converte</li>
-          <li>Campanhas de mídia paga com alto ROI</li>
-          <li>Análise de dados para otimização de campanhas</li>
-          <li>Automação de marketing</li>
-        </ul>
-        
-        <h3>Módulo 1: Fundamentos do Marketing Digital</h3>
-        <p>Neste módulo, revisaremos os conceitos fundamentais do marketing digital e estabeleceremos uma base sólida para as estratégias avançadas que serão apresentadas nos módulos seguintes.</p>
-        
-        <h3>Módulo 2: SEO Avançado</h3>
-        <p>Aprenda técnicas avançadas de otimização para mecanismos de busca, incluindo SEO técnico, link building estratégico e otimização de conteúdo.</p>
-        
-        <div class="video-container">
-          <iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-        
-        <h3>Módulo 3: Marketing de Conteúdo</h3>
-        <p>Descubra como criar conteúdo que não apenas atrai, mas também converte visitantes em clientes. Aprenda a desenvolver uma estratégia de conteúdo alinhada com o funil de vendas.</p>
-      `
-    },
-    {
-      id: 2,
-      title: 'SEO Avançado',
-      description: 'Domine as técnicas de otimização para mecanismos de busca',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'SEO',
-      lessons: 35,
-      duration: '8h',
-      instructor: 'Thomas Macedo'
-    },
-    {
-      id: 3,
-      title: 'Copywriting Persuasivo',
-      description: 'Aprenda a escrever textos que vendem',
-      image: 'https://images.unsplash.com/photo-1455849318743-b2233052fcff?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Copywriting',
-      lessons: 28,
-      duration: '6h',
-      instructor: 'Álvaro Ezequiel'
-    },
-    {
-      id: 4,
-      title: 'Estratégias para Instagram',
-      description: 'Como construir uma presença de sucesso no Instagram',
-      image: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Redes Sociais',
-      lessons: 22,
-      duration: '4h 30min',
-      instructor: 'André Goes'
-    },
-    {
-      id: 5,
-      title: 'E-commerce do Zero',
-      description: 'Crie sua loja online e comece a vender',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'E-commerce',
-      lessons: 30,
-      duration: '7h 15min',
-      instructor: 'Thomas Macedo'
-    },
-    {
-      id: 6,
-      title: 'YouTube para Negócios',
-      description: 'Como usar o YouTube para impulsionar seu negócio',
-      image: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Vídeo Marketing',
-      lessons: 26,
-      duration: '5h 45min',
-      instructor: 'Álvaro Ezequiel'
-    },
-    {
-      id: 7,
-      title: 'Facebook Ads Avançado',
-      description: 'Domine as campanhas de anúncios no Facebook',
-      image: 'https://images.unsplash.com/photo-1579869847514-7c1a19d2d2ad?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      lessons: 32,
-      duration: '9h 20min',
-      instructor: 'André Victor'
-    },
-    {
-      id: 8,
-      title: 'Automação de Marketing',
-      description: 'Ferramentas e estratégias para automatizar seu marketing',
-      image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      lessons: 28,
-      duration: '6h 45min',
-      instructor: 'André Goes'
-    },
-    {
-      id: 9,
-      title: 'Estratégias de Email Marketing',
-      description: 'Aumente suas conversões com campanhas de email eficientes',
-      image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      lessons: 24,
-      duration: '5h 30min',
-      instructor: 'Thomas Macedo'
-    },
-    {
-      id: 10,
-      title: 'Vendas Online',
-      description: 'Técnicas avançadas para aumentar suas vendas na internet',
-      image: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Vendas',
-      lessons: 36,
-      duration: '10h 15min',
-      instructor: 'Álvaro Ezequiel'
-    },
-    {
-      id: 11,
-      title: 'Google Analytics Avançado',
-      description: 'Aprenda a analisar dados e tomar decisões baseadas em métricas',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Análise',
-      lessons: 30,
-      duration: '8h 45min',
-      instructor: 'André Victor'
-    },
-    {
-      id: 12,
-      title: 'Criação de Conteúdo',
-      description: 'Como produzir conteúdo de qualidade para diferentes plataformas',
-      image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Copywriting',
-      lessons: 26,
-      duration: '6h 20min',
-      instructor: 'André Goes'
+  // Função para buscar cursos gratuitos
+  const fetchFreeCourses = async () => {
+    try {
+      setLoading(prev => ({ ...prev, courses: true }));
+      const { data, error } = await supabase
+        .from('relevant_contents')
+        .select('*')
+        .eq('status', 'published')
+        .order('updated_at', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      
+      const formattedCourses = data.map(course => ({
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        image: course.image_url || 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=300&h=400',
+        category: course.tags?.[0] || 'Marketing',
+        lessons: course.lessons_count || Math.floor(Math.random() * 10) + 5,
+        duration: course.duration || `${Math.floor(Math.random() * 5) + 1}h`,
+        instructor: course.author || 'DigitFy'
+      }));
+      
+      setRealCourses(formattedCourses);
+      console.log("Cursos gratuitos carregados:", formattedCourses);
+    } catch (error) {
+      console.error('Erro ao buscar cursos gratuitos:', error);
+      // Em caso de erro, use os dados fictícios
+      setRealCourses(courses);
+    } finally {
+      setLoading(prev => ({ ...prev, courses: false }));
     }
-  ];
+  };
 
-  // Dados de artigos (expandido)
-  const articles = [
-    {
-      id: 1,
-      title: '10 Estratégias de SEO para 2023',
-      description: 'Descubra as técnicas que estão dando resultado agora',
-      image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'SEO',
-      readTime: '8 min',
-      author: 'Thomas Macedo',
-      content: `
-        <h1>10 Estratégias de SEO para 2023</h1>
-        <p class="author">Por Thomas Macedo</p>
-        
-        <p>O mundo do SEO está em constante evolução, e o que funcionava há alguns anos pode não ser mais eficaz hoje. Neste artigo, vamos explorar as 10 estratégias de SEO mais eficientes para 2023, baseadas em dados e resultados comprovados.</p>
-        
-        <h2>1. Otimização para Pesquisa por Voz</h2>
-        <p>Com o aumento do uso de assistentes virtuais como Alexa, Siri e Google Assistant, a otimização para pesquisa por voz tornou-se essencial. As consultas de voz tendem a ser mais longas e conversacionais do que as digitadas.</p>
-        <p>Para otimizar seu conteúdo para pesquisa por voz:</p>
-        <ul>
-          <li>Foque em frases longas e perguntas naturais</li>
-          <li>Crie uma seção de FAQ em seu site</li>
-          <li>Otimize para consultas locais ("perto de mim")</li>
-        </ul>
-        
-        <h2>2. Experiência do Usuário (UX) como Fator de Ranking</h2>
-        <p>O Google agora considera métricas de experiência do usuário, conhecidas como Core Web Vitals, como fatores de classificação. Isso inclui:</p>
-        <ul>
-          <li>Largest Contentful Paint (LCP): velocidade de carregamento</li>
-          <li>First Input Delay (FID): interatividade</li>
-          <li>Cumulative Layout Shift (CLS): estabilidade visual</li>
-        </ul>
-        
-        <p>Melhorar esses aspectos não apenas beneficiará seu SEO, mas também proporcionará uma melhor experiência para seus visitantes.</p>
-        
-        <figure>
-          <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800" alt="Análise de SEO em um computador" />
-          <figcaption>Análise de métricas de SEO é fundamental para o sucesso online</figcaption>
-        </figure>
-        
-        <h2>3. Conteúdo Abrangente e Aprofundado</h2>
-        <p>O Google continua a favorecer conteúdo que aborda um tópico de forma completa e aprofundada. Em vez de criar vários artigos curtos sobre tópicos relacionados, considere criar guias abrangentes que cubram todos os aspectos de um assunto.</p>
-      `
-    },
-    {
-      id: 2,
-      title: 'Como Criar uma Página de Vendas Eficiente',
-      description: 'Elementos essenciais para aumentar conversões',
-      image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Vendas',
-      readTime: '12 min',
-      author: 'André Victor'
-    },
-    {
-      id: 3,
-      title: 'Tendências de Marketing Digital',
-      description: 'O que esperar para os próximos anos',
-      image: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      readTime: '15 min',
-      author: 'Álvaro Ezequiel'
-    },
-    {
-      id: 4,
-      title: 'Guia Completo de Google Ads',
-      description: 'Como criar campanhas de anúncios eficientes no Google',
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Marketing',
-      readTime: '20 min',
-      author: 'André Goes'
-    },
-    {
-      id: 5,
-      title: 'Otimização de Conversão',
-      description: 'Técnicas para melhorar a taxa de conversão do seu site',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Análise',
-      readTime: '10 min',
-      author: 'Thomas Macedo'
-    },
-    {
-      id: 6,
-      title: 'Storytelling para Marcas',
-      description: 'Como contar histórias que conectam com seu público',
-      image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Copywriting',
-      readTime: '14 min',
-      author: 'Álvaro Ezequiel'
-    },
-    {
-      id: 7,
-      title: 'Estratégias de Conteúdo para Redes Sociais',
-      description: 'Como criar um calendário de conteúdo eficiente',
-      image: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'Redes Sociais',
-      readTime: '11 min',
-      author: 'André Victor'
-    },
-    {
-      id: 8,
-      title: 'E-commerce: Otimizando a Experiência do Usuário',
-      description: 'Como melhorar a UX da sua loja virtual',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=300&h=400',
-      category: 'E-commerce',
-      readTime: '16 min',
-      author: 'André Goes'
+  // Função para buscar eBooks e PDFs
+  const fetchEbooks = async () => {
+    try {
+      setLoading(prev => ({ ...prev, ebooks: true }));
+      const { data, error } = await supabase
+        .from('ebooks')
+        .select('*')
+        .eq('status', 'published')
+        .limit(3);
+      
+      if (error) throw error;
+      
+      const formattedEbooks: Ebook[] = data.map(ebook => ({
+        id: ebook.id,
+        title: ebook.title,
+        description: ebook.description,
+        cover_image_url: ebook.cover_image_url || 'https://via.placeholder.com/800x600?text=PDF',
+        file_size: ebook.file_size || '0 MB',
+        file_type: ebook.file_type || 'PDF',
+        category: ebook.tags && ebook.tags.length > 0 ? ebook.tags[0] : 'Geral'
+      }));
+      
+      setRealEbooks(formattedEbooks);
+    } catch (error) {
+      console.error('Erro ao buscar ebooks:', error);
+      // Use os dados fictícios em caso de erro
+      setRealEbooks(previewEbooks.map(ebook => ({
+        id: ebook.id,
+        title: ebook.title,
+        description: ebook.description,
+        cover_image_url: ebook.coverImage,
+        file_size: ebook.fileSize,
+        category: ebook.category
+      })));
+    } finally {
+      setLoading(prev => ({ ...prev, ebooks: false }));
     }
-  ];
+  };
+
+  // Função para buscar mapas mentais
+  const fetchMindMaps = async () => {
+    try {
+      setLoading(prev => ({ ...prev, mindMaps: true }));
+      const { data, error } = await supabase
+        .from('mind_maps')
+        .select('*')
+        .eq('status', 'published')
+        .limit(2);
+      
+      if (error) throw error;
+      
+      const formattedMindMaps: MindMap[] = data.map(mindMap => ({
+        id: mindMap.id,
+        title: mindMap.title,
+        description: mindMap.description,
+        image_url: mindMap.image_url || 'https://via.placeholder.com/800x600?text=Mapa+Mental',
+        download_count: mindMap.download_count || 0
+      }));
+      
+      setRealMindMaps(formattedMindMaps);
+    } catch (error) {
+      console.error('Erro ao buscar mapas mentais:', error);
+      // Use os dados fictícios em caso de erro
+      setRealMindMaps(previewMindMaps.map(mindMap => ({
+        id: mindMap.id, 
+        title: mindMap.title,
+        description: mindMap.description,
+        image_url: mindMap.image,
+        download_count: mindMap.downloads
+      })));
+    } finally {
+      setLoading(prev => ({ ...prev, mindMaps: false }));
+    }
+  };
+
+  // Função para buscar estratégias de vendas
+  const fetchSalesStrategies = async () => {
+    try {
+      setLoading(prev => ({ ...prev, salesStrategies: true }));
+      const { data, error } = await supabase
+        .from('sales_strategies')
+        .select('*')
+        .eq('status', 'published')
+        .limit(2);
+      
+      if (error) throw error;
+      
+      const formattedStrategies: SalesStrategy[] = data.map(strategy => ({
+        id: strategy.id,
+        title: strategy.title,
+        description: strategy.description,
+        image_url: strategy.image_url || 'https://via.placeholder.com/800x600?text=Estratégia+de+Vendas',
+        read_time: strategy.read_time || '10 min'
+      }));
+      
+      setRealSalesStrategies(formattedStrategies);
+    } catch (error) {
+      console.error('Erro ao buscar estratégias de vendas:', error);
+      // Use os dados fictícios em caso de erro
+      setRealSalesStrategies(previewSalesStrategies.map(strategy => ({
+        id: strategy.id,
+        title: strategy.title,
+        description: strategy.description,
+        image_url: strategy.image,
+        read_time: strategy.readTime
+      })));
+    } finally {
+      setLoading(prev => ({ ...prev, salesStrategies: false }));
+    }
+  };
+
+  // Função para buscar pacotes gratuitos
+  const fetchFreePacks = async () => {
+    try {
+      setLoading(prev => ({ ...prev, freePacks: true }));
+      const { data, error } = await supabase
+        .from('free_packs')
+        .select('*')
+        .eq('status', 'published')
+        .limit(2);
+      
+      if (error) throw error;
+      
+      const formattedPacks: FreePack[] = data.map(pack => ({
+        id: pack.id,
+        title: pack.title,
+        description: pack.description,
+        image_url: pack.image_url || 'https://via.placeholder.com/800x600?text=Pacote+Gratuito',
+        items_count: pack.items_count || 0
+      }));
+      
+      setRealFreePacks(formattedPacks);
+    } catch (error) {
+      console.error('Erro ao buscar pacotes gratuitos:', error);
+      // Use os dados fictícios em caso de erro
+      setRealFreePacks(previewFreePacks.map(pack => ({
+        id: pack.id,
+        title: pack.title,
+        description: pack.description,
+        image_url: pack.image,
+        items_count: pack.items
+      })));
+    } finally {
+      setLoading(prev => ({ ...prev, freePacks: false }));
+    }
+  };
+
+  // Carregar todos os dados reais quando o componente montar
+  useEffect(() => {
+    fetchFreeCourses();
+    fetchEbooks();
+    fetchMindMaps();
+    fetchSalesStrategies();
+    fetchFreePacks();
+  }, []);
 
   // Categorias para navegação
   const categories = ['Todos', 'Marketing', 'SEO', 'Copywriting', 'Redes Sociais', 'E-commerce'];
 
   // Funções de navegação para as novas páginas
   const handleNavigateToDesafios = () => {
-    navigate('/learning/challenges');
+    navigate('/dashboard/learning/challenges');
   };
   
   const handleNavigateToCurso = () => {
-    navigate('/learning/course');
+    navigate('/dashboard/learning/course');
   };
 
   // Componente de Modal para Cursos
@@ -723,6 +760,139 @@ const Learning = () => {
     );
   };
 
+  // Prévia de e-books e PDFs
+  const previewEbooks = [
+    {
+      id: 1,
+      title: 'Guia Completo de Marketing Digital',
+      description: 'Aprenda tudo sobre marketing digital e como aplicá-lo no seu negócio.',
+      coverImage: 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&q=80&w=300&h=400',
+      fileSize: '5 MB',
+      category: 'Marketing Digital'
+    },
+    {
+      id: 2,
+      title: 'Manual de Copywriting',
+      description: 'Descubra como escrever textos persuasivos que convertem.',
+      coverImage: 'https://images.unsplash.com/photo-1515378960530-7c0da6231fb1?auto=format&fit=crop&q=80&w=300&h=400',
+      fileSize: '3 MB',
+      category: 'Copywriting'
+    },
+    {
+      id: 3,
+      title: 'Guia de SEO para Iniciantes',
+      description: 'Os fundamentos da otimização para mecanismos de busca explicados passo a passo.',
+      coverImage: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=300&h=400',
+      fileSize: '4.2 MB',
+      category: 'SEO'
+    }
+  ];
+
+  // Prévia de mapas mentais
+  const previewMindMaps = [
+    {
+      id: 1,
+      title: 'Funil de Vendas para Instagram',
+      description: 'Estrutura completa de um funil de vendas efetivo para Instagram',
+      image: 'https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&q=80&w=300&h=400',
+      downloads: 324
+    },
+    {
+      id: 2,
+      title: 'Estratégia de Conteúdo 360°',
+      description: 'Mapa mental para planejar sua estratégia de conteúdo em todas as plataformas',
+      image: 'https://images.unsplash.com/photo-1539627831859-a911cf04d3cd?auto=format&fit=crop&q=80&w=300&h=400',
+      downloads: 215
+    }
+  ];
+
+  // Prévia de estratégias de vendas
+  const previewSalesStrategies = [
+    {
+      id: 1,
+      title: 'Venda Consultiva para Infoprodutos',
+      description: 'Como aplicar a metodologia de venda consultiva para infoprodutos digitais',
+      image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=300&h=400',
+      readTime: '8 min'
+    },
+    {
+      id: 2,
+      title: 'Objeções em Vendas: Como Contorná-las',
+      description: 'Aprenda a lidar com as objeções mais comuns durante o processo de venda',
+      image: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=300&h=400',
+      readTime: '12 min'
+    }
+  ];
+
+  // Prévia de pacotes gratuitos
+  const previewFreePacks = [
+    {
+      id: 1,
+      title: 'Pack Completo para Instagram',
+      description: 'Templates para stories, posts e reels + guia de uso',
+      image: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=300&h=400',
+      items: 15
+    },
+    {
+      id: 2,
+      title: 'Pacote de Planilhas para Marketing',
+      description: 'Planilhas para planejamento, orçamento e análise de resultados',
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=300&h=400',
+      items: 8
+    }
+  ];
+
+  // Componente de navegação para visualizar mais conteúdos
+  const ViewMoreButton = ({ link, text }: { link: string, text: string }) => (
+    <div className="flex justify-center mt-8">
+      <button 
+        onClick={() => navigate(link)}
+        className="flex items-center text-emerald-600 hover:text-emerald-700 font-medium px-5 py-2.5 rounded-lg hover:bg-emerald-50 transition-all duration-300 group"
+      >
+        <span>{text}</span>
+        <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
+      </button>
+    </div>
+  );
+
+  // Componente de seção de conteúdo
+  const ContentSection = ({ 
+    title, 
+    icon, 
+    children, 
+    viewMoreLink 
+  }: { 
+    title: string, 
+    icon: React.ReactNode, 
+    children: React.ReactNode,
+    viewMoreLink: string
+  }) => (
+    <section className="mb-20">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-2.5 rounded-xl text-white shadow-sm">
+            {icon}
+          </div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">{title}</h2>
+        </div>
+        
+        <button 
+          onClick={() => navigate(viewMoreLink)}
+          className="hidden md:flex items-center text-sm text-emerald-600 hover:text-emerald-700 font-medium gap-1 hover:gap-2 transition-all duration-300"
+        >
+          <span>Ver todos</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+      
+      {children}
+      
+      <div className="md:hidden">
+        <ViewMoreButton link={viewMoreLink} text="Ver todos" />
+      </div>
+    </section>
+  );
+
   // Navegação por categorias
   const categoriesSection = (
     <div className="flex justify-center mb-8 overflow-x-auto hide-scrollbar">
@@ -747,23 +917,33 @@ const Learning = () => {
   
   // Botões de navegação para cursos e desafios
   const navigationButtons = (
-    <div className="container mx-auto px-4 mb-10">
-      <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
-        <h3 className="text-lg font-medium text-emerald-800 mb-4 text-center">Conteúdo Especial</h3>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+    <div className="container mx-auto px-4 mb-16">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 border border-emerald-100 shadow-sm">
+        <h3 className="text-xl font-bold text-emerald-800 mb-6 text-center">Conteúdo Especial</h3>
+        <div className="flex flex-col sm:flex-row gap-5 justify-center">
           <button 
-            className="bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+            className="bg-white text-emerald-700 hover:text-emerald-800 px-8 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow border border-emerald-100 group"
             onClick={handleNavigateToDesafios}
           >
-            <Zap className="mr-2" size={18} />
-            Desafios de Crescimento
+            <div className="bg-emerald-100 p-2 rounded-lg mr-3 text-emerald-600 group-hover:bg-emerald-200 transition-colors">
+              <Zap size={18} />
+            </div>
+            <div className="text-left">
+              <span className="block font-bold">Desafios de Crescimento</span>
+              <span className="text-sm text-gray-500">Aplique conhecimentos práticos</span>
+            </div>
           </button>
           <button 
-            className="bg-emerald-500 text-white hover:bg-emerald-600 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+            className="bg-white text-emerald-700 hover:text-emerald-800 px-8 py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center shadow-sm hover:shadow border border-emerald-100 group"
             onClick={handleNavigateToCurso}
           >
-            <BookOpen className="mr-2" size={18} />
-            Acessar Cursos Completos
+            <div className="bg-emerald-100 p-2 rounded-lg mr-3 text-emerald-600 group-hover:bg-emerald-200 transition-colors">
+              <BookOpen size={18} />
+            </div>
+            <div className="text-left">
+              <span className="block font-bold">Cursos Completos</span>
+              <span className="text-sm text-gray-500">Aulas detalhadas e certificadas</span>
+            </div>
           </button>
         </div>
       </div>
@@ -771,17 +951,16 @@ const Learning = () => {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Banner - Design Premium */}
-      <div className="relative overflow-hidden pt-16 pb-10 md:pt-20 md:pb-14">
-        {/* Elementos decorativos (círculos e formas) */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-100 rounded-full opacity-10 blur-3xl"></div>
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-teal-100 rounded-full opacity-10 blur-3xl"></div>
+      <div className="relative overflow-hidden pt-16 pb-10 md:pt-24 md:pb-20 bg-gray-50">
+        {/* Pattern dots no fundo */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.015]"></div>
         
         {/* Conteúdo Centralizado */}
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
-            className="flex items-center justify-center gap-2 mb-6 bg-white bg-opacity-80 backdrop-blur-sm px-4 py-2 rounded-full w-fit mx-auto border border-emerald-200 shadow-sm"
+            className="flex items-center justify-center gap-2 mb-8 bg-white bg-opacity-90 backdrop-blur-sm px-5 py-2.5 rounded-full w-fit mx-auto border border-gray-200 shadow-sm"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -792,60 +971,38 @@ const Learning = () => {
           
           <div className="text-center max-w-4xl mx-auto">
             <motion.h1 
-              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-800 mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-800 mb-6 tracking-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              Central de Aprendizado
+              Central de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Aprendizado</span>
             </motion.h1>
             
             <motion.p 
-              className="text-base sm:text-lg text-gray-600 mb-8 max-w-2xl mx-auto"
+              className="text-base sm:text-lg text-gray-600 mb-10 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              Expanda seus conhecimentos em marketing digital com cursos, tutoriais e recursos exclusivos.
+              Expanda seus conhecimentos em marketing digital com cursos, tutoriais, e-books, mapas mentais e muito mais.
             </motion.p>
             
             <motion.div
+              className="flex flex-wrap justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className="flex flex-wrap gap-4 justify-center"
             >
-              {/* Botão de scroll */}
               <button 
-                onClick={() => contentRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-3 rounded-lg font-medium transition-colors flex items-center shadow-sm border border-emerald-100"
-              >
-                Ver Conteúdo
-                <ArrowRight className="ml-2" size={18} />
-              </button>
-              
-              {/* Botão de Enviar Conteúdo */}
-              <button
+                className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-8 py-3.5 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-emerald-200 flex items-center"
                 onClick={handleSubmitContent}
-                disabled={isLoading}
-                className={`px-6 py-3 rounded-lg flex items-center shadow-sm ${
-                  canSubmitContent
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
               >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                ) : canSubmitContent ? (
-                  <Upload size={18} className="mr-2" />
-                ) : (
-                  <Lock size={18} className="mr-2" />
-                )}
-                Enviar Conteúdo
+                <Upload className="h-5 w-5 mr-2" />
+                Sugerir Conteúdo
               </button>
             </motion.div>
             
-            {/* Mensagem para usuários sem permissão */}
             {!canSubmitContent && (
               <motion.div
                 className="mt-4 text-gray-500 text-xs flex items-center justify-center gap-1"
@@ -862,442 +1019,388 @@ const Learning = () => {
       </div>
       
       {/* Conteúdo Principal */}
-      <div className="container mx-auto px-4 py-8" ref={contentRef}>
-        {/* Categorias de navegação */}
-        {categoriesSection}
+      <div className="container mx-auto px-4 py-12" ref={contentRef}>
         
-        {/* Cursos - Carrossel */}
-        <section id="courses" className="mb-16 relative">
-          <div className="flex justify-center items-center mb-8">
-            <motion.h2 
-              className="text-2xl font-bold text-gray-800 text-center"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Conteúdos Disponíveis
-            </motion.h2>
-          </div>
-          
-          <div 
-            ref={carouselRefs.courses}
-            className="flex gap-6 overflow-hidden pb-8 relative"
-          >
-            {courses
-              .filter(course => activeCategory === 'Todos' || course.category === activeCategory)
-              .map((course, index) => (
+        {/* Cursos Gratuitos */}
+        <ContentSection 
+          title="Cursos Gratuitos" 
+          icon={<BookOpen className="w-5 h-5" />}
+          viewMoreLink="/dashboard/learning/free-courses"
+        >
+          {loading.courses ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(realCourses.length > 0 ? realCourses : courses).map((course: Course, index: number) => (
                 <motion.div
                   key={course.id}
-                  className="relative min-w-[280px] bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.05 * index }}
+                  transition={{ delay: 0.1 * index, duration: 0.5 }}
+                  onClick={() => navigate('/dashboard/learning/free-courses')}
                 >
-                  <div className="relative h-[400px]">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 z-10"></div>
+                  <div className="relative">
                     <img 
                       src={course.image} 
                       alt={course.title}
-                      className="w-full h-full object-cover" 
+                      className="w-full h-52 object-cover transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/800x600?text=Curso";
+                      }}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                        {course.category}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">{course.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
                     
-                    <motion.div 
-                      className="absolute bottom-3 left-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-2 py-1 rounded-lg"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + index * 0.1 }}
-                    >
-                      {course.category}
-                    </motion.div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-                      <h3 className="font-bold text-white">{course.title}</h3>
-                      <p className="text-sm text-gray-200 mt-1 mb-3">{course.description}</p>
-                      
-                      <div className="text-xs text-gray-300 mb-4">
-                        Instrutor: {course.instructor}
+                    <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <PlayCircle className="w-4 h-4 text-emerald-500" />
+                          <span>{course.lessons} aulas</span>
+                        </div>
+                        
+                        <span className="text-gray-300">•</span>
+                        
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4 text-emerald-500" />
+                          <span>{course.duration}</span>
+                        </div>
                       </div>
                       
-                      <button 
-                        className="w-full py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                        onClick={() => setSelectedCourse(course)}
-                      >
-                        Ver Conteúdo
-                      </button>
+                      <ArrowRight className="w-5 h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </motion.div>
               ))}
+            </div>
+          )}
+        </ContentSection>
+        
+        {/* E-books e PDFs */}
+        <ContentSection 
+          title="E-books e PDFs" 
+          icon={<FileText className="w-5 h-5" />}
+          viewMoreLink="/dashboard/learning/ebooks"
+        >
+          {loading.ebooks ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(realEbooks.length > 0 ? realEbooks : previewEbooks.map(ebook => ({
+                id: ebook.id,
+                title: ebook.title,
+                description: ebook.description,
+                cover_image_url: ebook.coverImage,
+                file_size: ebook.fileSize,
+                category: ebook.category
+              } as Ebook))).map((ebook: Ebook, index: number) => (
+                <motion.div
+                  key={ebook.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index, duration: 0.5 }}
+                  onClick={() => navigate('/dashboard/learning/ebooks')}
+                >
+                  <div className="relative">
+                    <img 
+                      src={ebook.cover_image_url} 
+                      alt={ebook.title} 
+                      className="w-full h-52 object-cover transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/800x600?text=eBook";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                        {ebook.category || 'E-book'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">{ebook.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{ebook.description}</p>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                      <div className="flex items-center gap-1">
+                        <FileText className="w-4 h-4 text-emerald-500" />
+                        <span>{ebook.file_type || 'PDF'} • {ebook.file_size}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-emerald-500 font-medium group-hover:underline">
+                        <Download className="w-4 h-4" />
+                        <span>Download</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </ContentSection>
+        
+        {/* Mapas Mentais */}
+        <ContentSection 
+          title="Mapas Mentais" 
+          icon={<Map className="w-5 h-5" />}
+          viewMoreLink="/dashboard/learning/mind-maps"
+        >
+          {loading.mindMaps ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(realMindMaps.length > 0 ? realMindMaps : previewMindMaps.map(mindMap => ({
+                id: mindMap.id, 
+                title: mindMap.title,
+                description: mindMap.description,
+                image_url: mindMap.image,
+                download_count: mindMap.downloads
+              } as MindMap))).map((mindMap: MindMap, index: number) => (
+                <motion.div
+                  key={mindMap.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index, duration: 0.5 }}
+                  onClick={() => navigate('/dashboard/learning/mind-maps')}
+                >
+                  <div className="flex flex-col md:flex-row h-full">
+                    <div className="relative w-full md:w-2/5">
+                      <img 
+                        src={mindMap.image_url} 
+                        alt={mindMap.title} 
+                        className="w-full h-52 md:h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/800x600?text=Mapa+Mental";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r md:from-transparent md:to-white/10 from-black/50 to-black/30"></div>
+                      <div className="absolute top-4 left-4 md:hidden">
+                        <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                          Mapa Mental
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-5 flex flex-col justify-between md:w-3/5">
+                      <div>
+                        <div className="hidden md:inline-block mb-3">
+                          <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                            Mapa Mental
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{mindMap.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{mindMap.description}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                        <div className="flex items-center gap-1">
+                          <Map className="w-4 h-4 text-emerald-500" />
+                          <span>Mapa Mental</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-emerald-500 font-medium group-hover:underline">
+                          <Download className="w-4 h-4" />
+                          <span>{mindMap.download_count || 0} downloads</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </ContentSection>
+        
+        {/* Estratégias de Vendas */}
+        <ContentSection 
+          title="Estratégias de Vendas" 
+          icon={<DollarSign className="w-5 h-5" />}
+          viewMoreLink="/dashboard/learning/sales-strategy"
+        >
+          {loading.salesStrategies ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(realSalesStrategies.length > 0 ? realSalesStrategies : previewSalesStrategies.map(strategy => ({
+                id: strategy.id,
+                title: strategy.title,
+                description: strategy.description,
+                image_url: strategy.image,
+                read_time: strategy.readTime
+              } as SalesStrategy))).map((strategy: SalesStrategy, index: number) => (
+                <motion.div
+                  key={strategy.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index, duration: 0.5 }}
+                  onClick={() => navigate('/dashboard/learning/sales-strategy')}
+                >
+                  <div className="relative">
+                    <img 
+                      src={strategy.image_url} 
+                      alt={strategy.title} 
+                      className="w-full h-52 object-cover transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/800x600?text=Estratégia";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                        Estratégia
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">{strategy.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{strategy.description}</p>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4 text-emerald-500" />
+                        <span>{strategy.read_time || '5 min leitura'}</span>
+                      </div>
+                      
+                      <ArrowRight className="w-5 h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </ContentSection>
+        
+        {/* Pacotes Gratuitos */}
+        <ContentSection 
+          title="Pacotes Gratuitos" 
+          icon={<Package className="w-5 h-5" />}
+          viewMoreLink="/dashboard/learning/free-packs"
+        >
+          {loading.freePacks ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(realFreePacks.length > 0 ? realFreePacks : previewFreePacks.map(pack => ({
+                id: pack.id,
+                title: pack.title,
+                description: pack.description,
+                image_url: pack.image,
+                items_count: pack.items
+              } as FreePack))).map((pack: FreePack, index: number) => (
+                <motion.div
+                  key={pack.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index, duration: 0.5 }}
+                  onClick={() => navigate('/dashboard/learning/free-packs')}
+                >
+                  <div className="flex flex-col md:flex-row h-full">
+                    <div className="relative w-full md:w-2/5">
+                      <img 
+                        src={pack.image_url} 
+                        alt={pack.title} 
+                        className="w-full h-52 md:h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/800x600?text=Pacote";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r md:from-transparent md:to-white/10 from-black/50 to-black/30"></div>
+                      <div className="absolute top-4 left-4 md:hidden">
+                        <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                          Pacote
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-5 flex flex-col justify-between md:w-3/5">
+                      <div>
+                        <div className="hidden md:inline-block mb-3">
+                          <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                            Pacote
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{pack.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{pack.description}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                        <div className="flex items-center gap-1">
+                          <Package className="w-4 h-4 text-emerald-500" />
+                          <span>{pack.items_count || 0} itens</span>
+                        </div>
+                        
+                        <ArrowRight className="w-5 h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </ContentSection>
+        
+        {/* CTA - Desafios de aprendizado */}
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl p-8 sm:p-10 mb-16 shadow-xl shadow-emerald-100/40 overflow-hidden relative">
+          {/* Elementos decorativos com formas mais orgânicas */}
+          <div className="absolute -top-10 -right-10 w-80 h-80 rounded-full bg-white opacity-5 blur-lg transform rotate-12"></div>
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-black opacity-5 blur-lg transform -rotate-6"></div>
+          <div className="absolute top-1/3 right-1/4 w-40 h-40 rounded-full bg-white opacity-5 blur-md"></div>
+          
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="text-white max-w-2xl text-center md:text-left">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Desafios de Aprendizado</h2>
+              <p className="mb-6 text-white/90 text-base sm:text-lg">Teste seus conhecimentos e coloque em prática o que aprendeu com nossos desafios exclusivos. Complete missões, ganhe reconhecimento e aprimore suas habilidades!</p>
+              <button 
+                onClick={() => navigate('/dashboard/learning/challenges')}
+                className="w-full sm:w-auto bg-white text-emerald-600 hover:text-emerald-700 px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl font-medium transition-all duration-300 inline-flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-700/20"
+              >
+                <Zap className="w-5 h-5" />
+                Participar dos Desafios
+              </button>
+            </div>
             
-            {/* Duplicar os primeiros cursos para criar efeito de loop infinito */}
-            {courses
-              .filter(course => activeCategory === 'Todos' || course.category === activeCategory)
-              .slice(0, 4)
-              .map((course, index) => (
-                <motion.div
-                  key={`duplicate-${course.id}`}
-                  className="relative min-w-[280px] bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.05 * (index + courses.length) }}
-                >
-                  <div className="relative h-[400px]">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 z-10"></div>
-                    <img 
-                      src={course.image} 
-                      alt={course.title} 
-                      className="w-full h-full object-cover" 
-                    />
-                    
-                    <div className="absolute bottom-3 left-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-2 py-1 rounded-lg">
-                      {course.category}
-                    </div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-                      <h3 className="font-bold text-white">{course.title}</h3>
-                      <p className="text-sm text-gray-200 mt-1 mb-3">{course.description}</p>
-                      
-                      <div className="text-xs text-gray-300 mb-4">
-                        Instrutor: {course.instructor}
-                      </div>
-
-                      <button 
-                        className="w-full py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                        onClick={() => setSelectedCourse(course)}
-                      >
-                        Ver Conteúdo
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="relative mt-6 md:mt-0">
+              <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl transform rotate-6"></div>
+              <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 flex-shrink-0 bg-white/20 rounded-full flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-60"></div>
+                <Award className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 text-white drop-shadow-lg" />
+              </div>
+            </div>
           </div>
-          
-          {/* Controles de navegação */}
-          <div className="flex justify-center mt-4 space-x-4">
-            <motion.button 
-              onClick={() => scroll(carouselRefs.courses, 'left')}
-              className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            </motion.button>
-            <motion.button 
-              onClick={() => scroll(carouselRefs.courses, 'right')}
-              className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </motion.button>
-          </div>
-        </section>
-        
-        {/* Artigos - Carrossel */}
-        <section id="articles" className="relative">
-          <div className="flex justify-center items-center mb-8">
-            <motion.h2 
-              className="text-2xl font-bold text-gray-800 text-center"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Artigos e Tutoriais
-            </motion.h2>
-          </div>
-          
-          <div 
-            ref={carouselRefs.articles}
-            className="flex gap-6 overflow-hidden pb-8"
-          >
-            {articles
-              .filter(article => activeCategory === 'Todos' || article.category === activeCategory)
-              .map((article, index) => (
-                <motion.div
-                  key={article.id}
-                  className="relative min-w-[280px] bg-white rounded-xl overflow-hidden shadow-md border border-gray-100"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.05 * index }}
-                >
-                  <div className="relative h-[400px]">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 z-10"></div>
-                    <img 
-                      src={article.image} 
-                      alt={article.title} 
-                      className="w-full h-full object-cover" 
-                    />
-                    
-                    <div className="absolute top-3 left-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-2 py-1 rounded-lg">
-                      {article.category}
-                    </div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
-                      <h3 className="font-bold text-white">{article.title}</h3>
-                      <p className="text-sm text-gray-200 mt-1 mb-3">{article.description}</p>
-                      
-                      <div className="text-xs text-gray-300 mb-4">
-                        Autor: {article.author}
-                      </div>
-                      
-                      <button 
-                        className="w-full py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                        onClick={() => setSelectedArticle(article)}
-                      >
-                        Ler Artigo
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-          </div>
-          
-          {/* Controles de navegação para artigos */}
-          <div className="flex justify-center mt-4 space-x-4">
-            <motion.button 
-              onClick={() => scroll(carouselRefs.articles, 'left')}
-              className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            </motion.button>
-            <motion.button 
-              onClick={() => scroll(carouselRefs.articles, 'right')}
-              className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </motion.button>
-          </div>
-        </section>
+        </div>
       </div>
-
+      
       {/* Modais */}
-      {selectedCourse && (
-        <CourseModal
-          course={selectedCourse}
-          onClose={() => setSelectedCourse(null)}
-        />
-      )}
-      
-      {/* Modal de Artigo Selecionado */}
-      {selectedArticle && (
-        <ArticleModal
-          article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
-        />
-      )}
-      
-      {/* Modal de Envio de Conteúdo */}
-      <SubmitContentModal />
-      
-      {/* Estilos para o conteúdo do modal */}
-      <style>{`
-        /* Customização dos modais */
-        .course-content {
-          max-height: 85vh;
-          overflow-y: auto;
-        }
-        
-        .course-content::-webkit-scrollbar, 
-        .article-content::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        .course-content::-webkit-scrollbar-track,
-        .article-content::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        
-        .course-content::-webkit-scrollbar-thumb,
-        .article-content::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 10px;
-        }
-        
-        .course-content::-webkit-scrollbar-thumb:hover,
-        .article-content::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af;
-        }
-        
-        /* Melhorando o layout do iframe para vídeos */
-        .video-container {
-          position: relative;
-          padding-bottom: 56.25%; /* Proporção 16:9 */
-          height: 0;
-          overflow: hidden;
-          margin: 2rem 0;
-          border-radius: 0.75rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        .video-container iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border-radius: 0.75rem;
-        }
-        
-        /* Melhorando o layout das imagens */
-        .prose img {
-          border-radius: 0.75rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        /* Estilizando figcaption */
-        .prose figcaption {
-          text-align: center;
-          font-size: 0.875rem;
-          color: #6b7280;
-          margin-top: 0.5rem;
-        }
-        
-        /* Melhorando o layout das listas */
-        .prose ul {
-          list-style-type: none;
-          padding-left: 1.5rem;
-        }
-        
-        .prose ul li {
-          position: relative;
-          padding-left: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-        
-        .prose ul li:before {
-          content: "";
-          position: absolute;
-          left: -1.5rem;
-          top: 0.5rem;
-          height: 0.5rem;
-          width: 0.5rem;
-          background-color: #10b981;
-          border-radius: 50%;
-        }
-        
-        /* Estilos adicionais para melhorar a legibilidade do conteúdo */
-        .prose {
-          font-size: 1.05rem;
-          line-height: 1.75;
-        }
-        
-        .prose p {
-          margin-bottom: 1.5rem;
-          max-width: 70ch;
-        }
-        
-        .prose h1 {
-          font-weight: 800;
-          margin-bottom: 1.5rem;
-          color: #064e3b;
-          line-height: 1.2;
-        }
-        
-        .prose h2 {
-          font-weight: 700;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          color: #065f46;
-          padding-bottom: 0.5rem;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .prose h3 {
-          font-weight: 600;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          color: #047857;
-        }
-        
-        .prose strong {
-          color: #064e3b;
-        }
-        
-        .prose blockquote {
-          border-left: 4px solid #10b981;
-          padding-left: 1rem;
-          font-style: italic;
-          color: #4b5563;
-          margin: 1.5rem 0;
-          background-color: #f8fafc;
-          padding: 1rem;
-          border-radius: 0.5rem;
-        }
-        
-        .prose code {
-          background-color: #f1f5f9;
-          padding: 0.2rem 0.4rem;
-          border-radius: 0.25rem;
-          font-size: 0.875em;
-          color: #0f766e;
-        }
-        
-        .prose pre {
-          background-color: #1e293b;
-          color: #e2e8f0;
-          padding: 1rem;
-          border-radius: 0.5rem;
-          overflow-x: auto;
-          margin: 1.5rem 0;
-        }
-        
-        .prose a {
-          text-decoration: none;
-          border-bottom: 1px solid #10b981;
-          transition: border-color 0.2s, color 0.2s;
-        }
-        
-        .prose a:hover {
-          color: #059669;
-          border-color: #059669;
-        }
-        
-        /* Espaçamento de seções */
-        .prose > * + * {
-          margin-top: 1rem;
-        }
-        
-        /* Divisor para seções */
-        .prose hr {
-          margin: 2rem 0;
-          border: 0;
-          height: 1px;
-          background-color: #e5e7eb;
-        }
-        
-        /* Tabelas mais bonitas */
-        .prose table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 1.5rem 0;
-          font-size: 0.9rem;
-        }
-        
-        .prose th {
-          background-color: #f1f5f9;
-          font-weight: 600;
-          text-align: left;
-          padding: 0.75rem 1rem;
-          border-bottom: 2px solid #e5e7eb;
-          color: #0f766e;
-        }
-        
-        .prose td {
-          padding: 0.75rem 1rem;
-          border-bottom: 1px solid #e5e7eb;
-          vertical-align: top;
-        }
-        
-        .prose tr:last-child td {
-          border-bottom: none;
-        }
-        
-        .prose tr:hover {
-          background-color: #f8fafc;
-        }
-      `}</style>
+      <AnimatePresence>
+        {selectedCourse && <CourseModal course={selectedCourse} onClose={() => setSelectedCourse(null)} />}
+        {selectedArticle && <ArticleModal article={selectedArticle} onClose={() => setSelectedArticle(null)} />}
+        {showSubmitContentModal && <SubmitContentModal />}
+      </AnimatePresence>
     </div>
   );
 };

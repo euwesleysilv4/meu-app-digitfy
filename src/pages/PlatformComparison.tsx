@@ -8,7 +8,11 @@ interface Platform {
   logoAlt: string;
   commission: string;
   minValue: string;
-  paymentTerm: string;
+  paymentTerm: {
+    card: string;
+    pix: string;
+    billet: string;
+  };
   advantages: string[];
   disadvantages: string[];
   features: {
@@ -30,7 +34,11 @@ const platforms: Platform[] = [
     logoAlt: "https://hotmart.s3.amazonaws.com/product_pictures/0b3ef95c-7b8b-4ccd-85b7-4acb9883cde7/HotmartSquareLogo.png",
     commission: "9.9% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "7 dias úteis",
+    paymentTerm: {
+      card: "7 dias úteis",
+      pix: "2 dias úteis",
+      billet: "14 dias úteis"
+    },
     advantages: [
       "Marketplace com grande visibilidade",
       "Sistema de afiliados robusto",
@@ -59,7 +67,11 @@ const platforms: Platform[] = [
     logoAlt: "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/0e/c0/02/0ec0028c-cb98-ba4e-1f78-d36c1d06db71/AppIcon-0-0-1x_U007emarketing-0-7-0-0-85-220.png/512x512bb.jpg",
     commission: "7.97% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "3 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Checkout otimizado e responsivo",
       "Bom sistema de rastreamento",
@@ -88,7 +100,11 @@ const platforms: Platform[] = [
     logoAlt: "https://sunize.com.br/favicon.ico",
     commission: "7.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "3 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Interface moderna",
       "Bom suporte ao produtor",
@@ -117,7 +133,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/veXOgYwExkjB4LAkt7MpzDssBMk2R7Ibt1q6r5ljHkIwR0WJLT6MDG9tl3XrTOjvyeo",
     commission: "9.97% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "7 dias úteis",
+    paymentTerm: {
+      card: "7 dias úteis",
+      pix: "2 dias úteis",
+      billet: "14 dias úteis"
+    },
     advantages: [
       "Marketplace estabelecido",
       "Bom sistema de afiliados",
@@ -146,7 +166,11 @@ const platforms: Platform[] = [
     logoAlt: "https://kirvano.com/wp-content/uploads/2023/05/cropped-favicon-kirvano-192x192.png",
     commission: "7.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "3 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Plataforma brasileira",
       "Suporte personalizado",
@@ -175,7 +199,11 @@ const platforms: Platform[] = [
     logoAlt: "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/ef/4f/22/ef4f2246-609e-40c5-9136-ea19676293d0/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg",
     commission: "6.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "2 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Taxa competitiva",
       "Checkout moderno",
@@ -204,7 +232,11 @@ const platforms: Platform[] = [
     logoAlt: "https://ghostspay.com/favicon.ico",
     commission: "5.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "1 dia útil",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Taxa atrativa",
       "Checkout rápido",
@@ -233,7 +265,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/EaIaz4I4OcMLpp3-cvfVmQdJ8t_HzbpiXal_OltViR1KvxF7eDd056t-4GLlZ8OGpg",
     commission: "6.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "2 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Gestão financeira integrada",
       "Dashboard completo",
@@ -262,7 +298,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/fXQVXTma1ENwAFjrXtlv7CyQk_6DEzQgEVHxpJlTGrC4OE4V91CyZQQJ6Iamw_LgEi4",
     commission: "8.97% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "3 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Marketplace ativo",
       "Bom sistema de afiliados",
@@ -291,7 +331,11 @@ const platforms: Platform[] = [
     logoAlt: "https://ticto.com.br/favicon.ico",
     commission: "7.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "2 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Foco em automação",
       "Bom para memberships",
@@ -318,9 +362,13 @@ const platforms: Platform[] = [
     name: "Cakto",
     logo: "https://play-lh.googleusercontent.com/RrKEVOidYnBOkRFbJdN8D_HQs4D9kvnYOt4rfkGF4wsUCg_K2EGhHpJdg3Owa0QdMjLy=w240-h480-rw",
     logoAlt: "https://play-lh.googleusercontent.com/RrKEVOidYnBOkRFbJdN8D_HQs4D9kvnYOt4rfkGF4wsUCg_K2EGhHpJdg3Owa0QdMjLy=w240-h480-rw",
-    commission: "5.99% + R$1",
+    commission: "0,00% + R$2,49",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "1 dia útil",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Taxa competitiva",
       "Interface moderna",
@@ -349,7 +397,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/2HgF__uYOfLMQTFYvg2tfrm3D8v2dW0sANdKzpSZ0GSUj7-SmJ-w4-zpfQWIRyyULOY",
     commission: "6.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "2 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Bom para e-commerce",
       "Múltiplas integrações",
@@ -378,7 +430,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/Gb-ScJKwB68J25YYtxf7ol4W9NVCdiCmVBhv6GJSf_C-ZlX1FYJqv7SqJ6c6lzTUg7s",
     commission: "5.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "1 dia útil",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Taxa atrativa",
       "Interface simples",
@@ -407,7 +463,11 @@ const platforms: Platform[] = [
     logoAlt: "https://play-lh.googleusercontent.com/K3-rcwv7mDsxb_ixD1ZGSIIbk-ZGHaQyVwC4oovULzK-gneqydUBZkrJN9IihypY3A=w240-h480-rw",
     commission: "6.99% + R$1",
     minValue: "R$1,97",
-    paymentTerm: "14 dias úteis",
+    paymentTerm: {
+      card: "14 dias úteis",
+      pix: "2 dias úteis",
+      billet: "21 dias úteis"
+    },
     advantages: [
       "Bom para e-commerce",
       "Múltiplas integrações",
@@ -522,6 +582,22 @@ const PlatformComparison = () => {
         ))}
       </div>
 
+      {/* Aviso sobre a fonte dos dados */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 bg-amber-50/80 border border-amber-100 rounded-2xl p-4"
+      >
+        <div className="flex items-center justify-center space-x-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+            <Info className="w-5 h-5 text-amber-600" />
+          </div>
+          <p className="text-amber-800 font-medium text-center text-sm">
+            Os dados apresentados foram coletados através de pesquisas no Google. Para informações mais precisas e atualizadas, recomendamos sempre acessar a página oficial da plataforma desejada.
+          </p>
+        </div>
+      </motion.div>
+
       {/* Tabela de comparação com responsividade */}
       {selectedPlatforms.length > 0 && (
         <motion.div
@@ -560,7 +636,11 @@ const PlatformComparison = () => {
                       <Clock className="w-4 h-4 text-emerald-500 mr-2" />
                       Prazo de Pagamento
                     </div>
-                    <div className="text-gray-800 ml-6">{platform.paymentTerm}</div>
+                    <div className="text-gray-800 ml-6">
+                      <p><span className="font-medium">Cartão:</span> {platform.paymentTerm.card}</p>
+                      <p><span className="font-medium">PIX:</span> {platform.paymentTerm.pix}</p>
+                      <p><span className="font-medium">Boleto:</span> {platform.paymentTerm.billet}</p>
+                    </div>
                   </div>
 
                   {/* Vantagens */}
@@ -647,10 +727,16 @@ const PlatformComparison = () => {
                 </div>
                 <div className="grid" style={{ gridTemplateColumns: `repeat(${selectedPlatforms.length}, 1fr)` }}>
                   {selectedPlatforms.map((platform) => (
-                    <div key={platform.name} className="p-6 flex items-start">
-                      <span className="text-gray-600">
-                        {platform.paymentTerm}
-                      </span>
+                    <div key={platform.name} className="p-6 flex flex-col space-y-2">
+                      <p className="text-gray-600">
+                        <span className="font-medium text-gray-700">Cartão:</span> {platform.paymentTerm.card}
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-medium text-gray-700">PIX:</span> {platform.paymentTerm.pix}
+                      </p>
+                      <p className="text-gray-600">
+                        <span className="font-medium text-gray-700">Boleto:</span> {platform.paymentTerm.billet}
+                      </p>
                     </div>
                   ))}
                 </div>

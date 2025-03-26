@@ -303,8 +303,8 @@ const UpgradePlans: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex items-start gap-5">
-            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl flex-shrink-0 mt-1 shadow-md">
+          <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 md:gap-5">
+            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl flex-shrink-0 shadow-md">
               <Info size={22} className="text-white" />
             </div>
             <div>
@@ -326,13 +326,13 @@ const UpgradePlans: React.FC = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           {/* Título com gradiente corrigido */}
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent inline-block">
               Escolha o plano ideal para você
             </span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Descubra recursos exclusivos que impulsionarão sua presença digital. Selecione o plano que melhor atende às suas necessidades e comece a transformar suas ideias em resultados concretos.
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto px-4">
+            Descubra recursos exclusivos que impulsionarão sua presença digital. Selecione o plano que melhor atende às suas necessidades.
           </p>
         </motion.div>
 
@@ -380,7 +380,7 @@ const UpgradePlans: React.FC = () => {
                 key={plan.id}
                 className={`
                   flex flex-col h-full
-                  ${isMobile ? 'min-w-full snap-center px-4 pb-2' : ''}
+                  ${isMobile ? 'min-w-[90%] snap-center px-2 pb-2' : ''}
                 `}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -513,11 +513,29 @@ const UpgradePlans: React.FC = () => {
                         <button 
                           onClick={() => {
                             if (plan.id === 'premium') {
-                              window.location.href = 'https://lastlink.com/p/CB27B7BCF/checkout-payment/';
+                              if (selectedPeriod === 'monthly') {
+                                window.location.href = 'https://pay.cakto.com.br/rcznj5h_315121';
+                              } else if (selectedPeriod === 'quarterly') {
+                                window.location.href = 'https://pay.cakto.com.br/i35vhzu';
+                              } else if (selectedPeriod === 'yearly') {
+                                window.location.href = 'https://pay.cakto.com.br/347pnd2';
+                              }
                             } else if (plan.id === 'business') {
-                              window.location.href = 'https://lastlink.com/p/CC752B3E1/checkout-payment/';
+                              if (selectedPeriod === 'monthly') {
+                                window.location.href = 'https://pay.cakto.com.br/33vtgs3';
+                              } else if (selectedPeriod === 'quarterly') {
+                                window.location.href = 'https://pay.cakto.com.br/9j2agmx';
+                              } else if (selectedPeriod === 'yearly') {
+                                window.location.href = 'https://pay.cakto.com.br/be4tbqg';
+                              }
                             } else if (plan.id === 'cloud') {
-                              window.location.href = 'https://lastlink.com/p/C64A61C51/checkout-payment/';
+                              if (selectedPeriod === 'monthly') {
+                                window.location.href = 'https://pay.cakto.com.br/fc5vhmk';
+                              } else if (selectedPeriod === 'quarterly') {
+                                window.location.href = 'https://pay.cakto.com.br/3nnywmn';
+                              } else if (selectedPeriod === 'yearly') {
+                                window.location.href = 'https://pay.cakto.com.br/ojo545q';
+                              }
                             }
                           }}
                           className={`w-full py-3.5 px-4 rounded-xl text-sm font-medium ${
@@ -568,7 +586,7 @@ const UpgradePlans: React.FC = () => {
           </div>
         )}
 
-        {/* Seletor de período - MOVIDO PARA BAIXO DOS PLANOS */}
+        {/* Seletor de Período */}
         <motion.div 
           className="mt-12 mb-10 max-w-md mx-auto"
           initial={{ opacity: 0, y: 20 }}

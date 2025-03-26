@@ -4,17 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Sparkles, Shield, Zap, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PlanFeatureComparison from '../components/PlanFeatureComparison';
-import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { planService } from '../services/planService';
+import type { UserPlan } from '../lib/supabase';
 
 /**
  * Página de atualização de plano que permite ao usuário visualizar e selecionar diferentes planos
+ * Nova implementação usando planService para evitar problemas com a coluna data_expiracao_plano
  */
 const UpgradePlan: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<string | null>(null);
   const [showFullComparison, setShowFullComparison] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<UserPlan | null>(null);
   
   const currentPlan = profile?.plano || 'gratuito';
   
@@ -95,45 +98,90 @@ const UpgradePlan: React.FC = () => {
     }
   ];
   
-  const updateUserPlan = async (planId: string) => {
-    if (planId === currentPlan) {
-      toast.success('Você já está inscrito nesse plano!');
+  // Nova implementação usando função limpa sem referências problemáticas
+  const updateUserPlan = async () => {
+    if (!selectedPlan) return;
+    
+    // Se o plano selecionado for o mesmo que o atual, apenas mostra a mensagem de sucesso
+    if (selectedPlan === profile?.plano) {
+      toast.success("Seu plano foi atualizado com sucesso!");
       return;
     }
-    
-    setLoading(planId);
+
+    setLoading(selectedPlan);
     
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ plano: planId })
-        .eq('id', profile?.id);
+      // Primeiro tenta a nova função limpa
+      console.log('Tentando atualização com função limpa...');
+      const result = await planService.updatePlanClean(
+        profile?.id as string,
+        selectedPlan as UserPlan
+      );
+      
+      if (result.success) {
+        // Atualiza também na sessão
+        await planService.updateUserProfileInSession(
+          profile?.id as string,
+          selectedPlan as UserPlan
+        );
         
-      if (error) throw error;
+        // Sincronizar com a função limpa
+        await planService.syncPlanClean(profile?.id as string);
+        
+        toast.success("Seu plano foi atualizado com sucesso! (método limpo)");
+        refreshProfile(); // Atualizar o perfil do usuário na aplicação
+        navigate('/dashboard');
+        return;
+      }
       
-      await refreshProfile();
-      toast.success(`Plano atualizado para ${plans.find(p => p.id === planId)?.name}!`);
+      // Se falhar, tenta atualização direta no SQL
+      console.log('Método limpo falhou, tentando SQL direto...');
       
-      // Simulação de redirecionamento para checkout quando não for gratuito
-      if (planId !== 'gratuito') {
-        toast.success('Em um ambiente real, você seria redirecionado para a página de checkout.');
+      // Atualizar diretamente no perfil
+      try {
+        await planService.execute_sql_safe(`
+          UPDATE public.profiles 
+          SET plano = '${selectedPlan}'::user_plan, 
+              data_modificacao = NOW() 
+          WHERE id = '${profile?.id}'
+        `);
+        
+        // Atualizar diretamente nos metadados
+        await planService.execute_sql_safe(`
+          UPDATE auth.users
+          SET raw_user_meta_data = 
+              COALESCE(raw_user_meta_data, '{}'::jsonb) || 
+              jsonb_build_object(
+                  'plano', '${selectedPlan}',
+                  'plano_updated_at', '${new Date().toISOString()}'
+              )
+          WHERE id = '${profile?.id}'
+        `);
+        
+        // Atualiza também na sessão
+        await planService.updateUserProfileInSession(
+          profile?.id as string,
+          selectedPlan as UserPlan
+        );
+        
+        toast.success("Seu plano foi atualizado com sucesso! (SQL direto)");
+        refreshProfile(); // Atualizar o perfil do usuário na aplicação
+        navigate('/dashboard');
+      } catch (error) {
+        console.error("Erro na atualização direta:", error);
+        throw new Error("Não foi possível atualizar seu plano após todas as tentativas");
       }
     } catch (error) {
-      console.error('Erro ao atualizar plano:', error);
-      toast.error('Não foi possível atualizar o plano. Tente novamente.');
+      console.error("Erro ao atualizar plano:", error);
+      toast.error("Erro ao atualizar o plano. Por favor, tente novamente.");
     } finally {
       setLoading(null);
     }
   };
   
-  const handleSelectPlan = (planId: string) => {
-    if (planId === 'gratuito') {
-      updateUserPlan(planId);
-    } else {
-      // Aqui você integraria com gateway de pagamento
-      // Por enquanto, apenas atualizamos diretamente
-      updateUserPlan(planId);
-    }
+  const handleSelectPlan = (planId: UserPlan) => {
+    setSelectedPlan(planId);
+    updateUserPlan();
   };
   
   const isPlanDisabled = (planId: string) => {
@@ -202,7 +250,7 @@ const UpgradePlan: React.FC = () => {
             </ul>
             
             <button
-              onClick={() => handleSelectPlan(plan.id)}
+              onClick={() => handleSelectPlan(plan.id as UserPlan)}
               disabled={isPlanDisabled(plan.id)}
               className={`
                 w-full py-2 px-4 rounded font-medium transition-colors duration-200

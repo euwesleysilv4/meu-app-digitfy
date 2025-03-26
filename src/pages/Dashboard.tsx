@@ -26,14 +26,44 @@ import {
   Calendar,
   PlayCircle,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+// Interface para o banner
+interface Banner {
+  id: number;
+  imagem_desktop: string;
+  imagem_mobile: string;
+  url_destino: string;
+  ativo: boolean;
+  data_inicio: string;
+  data_fim: string | null;
+  titulo: string;
+}
 
 const Dashboard: React.FC = () => {
   const [currentContent, setCurrentContent] = useState<string>('home');
-  const { profile, session } = useAuth();
+  const { profile, session, loading: authLoading } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const [bannerLoading, setBannerLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
+  
+  // Iniciar carregamento da página quando o componente montar
+  useEffect(() => {
+    // Verificar se a autenticação foi concluída e o perfil foi carregado
+    if (!authLoading && profile) {
+      // Adicionar um pequeno delay para garantir que todos os componentes estejam prontos
+      const timer = setTimeout(() => {
+        setPageLoading(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, profile]);
   
   useEffect(() => {
     // Atualizar horário a cada minuto
@@ -42,6 +72,42 @@ const Dashboard: React.FC = () => {
     }, 60000);
     
     return () => clearInterval(timer);
+  }, []);
+  
+  // Buscar banner atual
+  useEffect(() => {
+    const fetchBanner = async () => {
+      try {
+        // Criar cliente Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Buscar banner ativo para hoje
+        const { data, error } = await supabase
+          .from('banners')
+          .select('*')
+          .eq('ativo', true)
+          .lte('data_inicio', today) // Data de início <= hoje
+          .or(`data_fim.is.null, data_fim.gte.${today}`) // Data de fim é null OU data_fim >= hoje
+          .order('id', { ascending: false })
+          .limit(1);
+        
+        if (error) {
+          console.error('Erro ao buscar banner:', error);
+        } else if (data && data.length > 0) {
+          setBanner(data[0]);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar banner:', err);
+      } finally {
+        setBannerLoading(false);
+      }
+    };
+    
+    fetchBanner();
   }, []);
   
   // Formatar saudação baseada na hora do dia
@@ -75,6 +141,24 @@ const Dashboard: React.FC = () => {
     return planMap[planName] || planMap.free;
   };
 
+  // Renderizar tela de carregamento enquanto os dados são carregados
+  if (pageLoading || authLoading || !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+        <div className="relative">
+          <img 
+            src="/novas%20logos/fav-icon-digitfy.png" 
+            alt="DigitFy" 
+            className="w-16 h-16 animate-spin"
+            style={{ animationDuration: '2s' }}
+          />
+        </div>
+        <h2 className="text-xl font-semibold text-emerald-700 mb-2 mt-4">Carregando seu painel</h2>
+        <p className="text-emerald-600">Preparando seus dados personalizados...</p>
+      </div>
+    );
+  }
+  
   const renderContent = () => {
     switch(currentContent) {
       case 'news-feed':
@@ -88,6 +172,42 @@ const Dashboard: React.FC = () => {
         
         return (
           <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            {/* Banner Dinâmico */}
+            {!bannerLoading && banner && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8 rounded-2xl overflow-hidden shadow-sm border border-emerald-100"
+              >
+                <div className="relative banner-container" style={{ height: '250px' }}>
+                  {/* Imagem do banner para Desktop */}
+                  <img 
+                    src={banner.imagem_desktop} 
+                    alt={banner.titulo}
+                    className="hidden md:block absolute inset-0 w-full h-full object-cover"
+                  />
+                  
+                  {/* Imagem do banner para Mobile */}
+                  <img 
+                    src={banner.imagem_mobile} 
+                    alt={banner.titulo}
+                    className="md:hidden absolute inset-0 w-full h-full object-cover"
+                  />
+                  
+                  {/* Link clicável sobre o banner */}
+                  <a 
+                    href={banner.url_destino} 
+                    className="absolute inset-0 w-full h-full flex items-center justify-center"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="sr-only">{banner.titulo}</span>
+                  </a>
+                </div>
+              </motion.div>
+            )}
+            
             {/* Cabeçalho com gradiente e saudação personalizada */}
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
@@ -232,160 +352,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             
-            {/* Cards de recursos principais */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full mr-2"></div>
-                Recursos Principais
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <Wrench size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Ferramentas
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Utilize nossas ferramentas exclusivas para otimizar seus resultados
-                  </p>
-                  <Link to="/dashboard/tools" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <BookOpenText size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Conteúdos
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Aprenda com nossas videoaulas e materiais exclusivos
-                  </p>
-                  <Link to="/dashboard/learning" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <Users2 size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Comunidade
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Conecte-se com outros membros e amplie sua rede
-                  </p>
-                  <Link to="/dashboard/community" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <Rocket size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Destaque-se
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Turbine seus resultados com nossos recursos premium
-                  </p>
-                  <Link to="/dashboard/upgrade" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <BarChart3 size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Análises
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Acompanhe métricas e resultados detalhados das suas campanhas
-                  </p>
-                  <Link to="/dashboard/analytics" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div 
-                  whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
-                  className="bg-white rounded-xl border border-emerald-100 shadow-sm p-6 relative overflow-hidden group flex flex-col h-full"
-                >
-                  <div className="flex items-center mb-3">
-                    <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-sm">
-                      <MessageSquare size={20} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-emerald-800 ml-3 relative z-10">
-                      Suporte
-                    </h3>
-                  </div>
-                  <p className="text-emerald-700 text-sm mb-4 relative z-10 flex-grow">
-                    Entre em contato com nossa equipe para resolver suas dúvidas
-                  </p>
-                  <Link to="/dashboard/support" className="inline-flex items-center justify-center text-sm font-medium text-emerald-700 hover:text-white hover:bg-emerald-600 group relative z-10 mt-auto border border-emerald-200 rounded-lg py-2 px-4 transition-all hover:border-emerald-600">
-                    Acessar
-                    <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </motion.div>
-              </div>
-            </div>
-            
             {/* Tutoriais em Vídeo */}
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -393,145 +359,12 @@ const Dashboard: React.FC = () => {
                 Tutoriais em Vídeo
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
-                >
-                  <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                    <img 
-                      src="https://img.youtube.com/vi/YOUTUBE_ID_1/maxresdefault.jpg" 
-                      alt="Introdução à DigitFy" 
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer">
-                        <PlayCircle size={36} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 flex-grow">
-                    <h3 className="font-semibold text-gray-800 mb-1">Introdução à DigitFy</h3>
-                    <p className="text-gray-600 text-sm mb-3">Aprenda o básico sobre nossa plataforma e como começar</p>
-                  </div>
-                  <div className="p-4 border-t border-gray-100 mt-auto">
-                    <a 
-                      href="https://www.youtube.com/watch?v=YOUTUBE_ID_1" 
-                      target="_blank"
-                      rel="noopener noreferrer" 
-                      className="w-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium"
-                    >
-                      Assistir no YouTube
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                </motion.div>
+              <div className="space-y-12">
+                <TutorialVideosSection categoria="introducao" titulo="Introdução à DigitFy" />
                 
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
-                >
-                  <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                    <img 
-                      src="https://img.youtube.com/vi/YOUTUBE_ID_2/maxresdefault.jpg" 
-                      alt="Benefícios dos Planos Premium" 
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer">
-                        <PlayCircle size={36} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 flex-grow">
-                    <h3 className="font-semibold text-gray-800 mb-1">Benefícios dos Planos Premium</h3>
-                    <p className="text-gray-600 text-sm mb-3">Conheça as vantagens exclusivas de cada nível de assinatura</p>
-                  </div>
-                  <div className="p-4 border-t border-gray-100 mt-auto">
-                    <a 
-                      href="https://www.youtube.com/watch?v=YOUTUBE_ID_2" 
-                      target="_blank"
-                      rel="noopener noreferrer" 
-                      className="w-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium"
-                    >
-                      Assistir no YouTube
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                </motion.div>
+                <TutorialVideosSection categoria="planos_premium" titulo="Benefícios dos Planos Premium" />
                 
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
-                >
-                  <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                    <img 
-                      src="https://img.youtube.com/vi/YOUTUBE_ID_3/maxresdefault.jpg" 
-                      alt="Ferramentas Avançadas" 
-                      className="absolute top-0 left-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer">
-                        <PlayCircle size={36} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-4 flex-grow">
-                    <h3 className="font-semibold text-gray-800 mb-1">Ferramentas Avançadas</h3>
-                    <p className="text-gray-600 text-sm mb-3">Domine as funcionalidades premium da plataforma</p>
-                  </div>
-                  <div className="p-4 border-t border-gray-100 mt-auto">
-                    <a 
-                      href="https://www.youtube.com/watch?v=YOUTUBE_ID_3" 
-                      target="_blank"
-                      rel="noopener noreferrer" 
-                      className="w-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium"
-                    >
-                      Assistir no YouTube
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                </motion.div>
-              </div>
-              
-              <div className="mt-6">
-                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-start">
-                    <div className="bg-emerald-500 rounded-full p-2 mr-4 flex-shrink-0 mt-1">
-                      <svg viewBox="0 0 24 24" height="24" width="24" fill="#FFFFFF">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-emerald-800 mb-2">
-                        Aprenda mais no nosso canal do YouTube
-                      </h3>
-                      <p className="text-emerald-700 text-sm mb-3">
-                        A DigitFy disponibiliza diversos tutoriais detalhados no nosso canal oficial do YouTube. 
-                        Aprenda estratégias avançadas, dicas exclusivas e fique atualizado com as últimas 
-                        tendências do mercado digital.
-                      </p>
-                      <a 
-                        href="https://www.youtube.com/channel/CHANNEL_ID" 
-                        target="_blank"
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center text-sm font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
-                      >
-                        Visitar nosso canal
-                        <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <TutorialVideosSection categoria="ferramentas" titulo="Ferramentas Avançadas" />
               </div>
             </div>
           </div>
@@ -544,6 +377,182 @@ const Dashboard: React.FC = () => {
       <main className="pt-4 pb-12">
         {renderContent()}
       </main>
+    </div>
+  );
+};
+
+const TutorialVideosSection: React.FC<{ categoria: string; titulo: string }> = ({ categoria, titulo }) => {
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        // Criar cliente Supabase local
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Buscar TODOS os vídeos ativos desta categoria
+        const { data, error } = await supabaseClient
+          .from('tutorial_videos')
+          .select('*')
+          .eq('categoria', categoria)
+          .eq('ativo', true)
+          .order('ordem', { ascending: true });
+        
+        if (error) {
+          console.error(`Erro ao buscar vídeos da categoria ${categoria}:`, error);
+          setError(error.message);
+        } else {
+          setVideos(data || []);
+        }
+      } catch (err: any) {
+        console.error(`Erro ao buscar vídeos tutoriais da categoria ${categoria}:`, err);
+        setError(err.message || 'Erro ao carregar vídeos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchVideos();
+  }, [categoria]);
+  
+  if (loading) {
+    return (
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
+      >
+        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+          <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+        </div>
+        <div className="p-4 flex-grow">
+          <div className="h-5 bg-gray-200 rounded animate-pulse mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+        </div>
+        <div className="p-4 border-t border-gray-100 mt-auto">
+          <div className="h-10 bg-gray-200 rounded animate-pulse w-full"></div>
+        </div>
+      </motion.div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
+      >
+        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+          <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
+            <AlertCircle size={48} className="text-red-300" />
+          </div>
+        </div>
+        <div className="p-4 flex-grow">
+          <h3 className="font-semibold text-gray-800 mb-1">{titulo}</h3>
+          <p className="text-gray-600 text-sm mb-3">Erro ao carregar o vídeo</p>
+        </div>
+        <div className="p-4 border-t border-gray-100 mt-auto">
+          <button
+            disabled
+            className="w-full flex items-center justify-center bg-gray-400 text-white py-2 px-4 rounded-lg text-sm font-medium cursor-not-allowed"
+          >
+            Indisponível
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+  
+  if (videos.length === 0) {
+    return (
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
+      >
+        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+            <PlayCircle size={48} className="text-gray-300" />
+          </div>
+        </div>
+        <div className="p-4 flex-grow">
+          <h3 className="font-semibold text-gray-800 mb-1">{titulo}</h3>
+          <p className="text-gray-600 text-sm mb-3">Em breve novos vídeos sobre este tema</p>
+        </div>
+        <div className="p-4 border-t border-gray-100 mt-auto">
+          <button
+            disabled
+            className="w-full flex items-center justify-center bg-gray-400 text-white py-2 px-4 rounded-lg text-sm font-medium cursor-not-allowed"
+          >
+            Em breve
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+  
+  return (
+    <div className="col-span-1 lg:col-span-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {videos.map((video) => (
+          <motion.div 
+            key={video.id}
+            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
+          >
+            <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+              <img 
+                src={`https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`} 
+                alt={video.titulo} 
+                className="absolute top-0 left-0 w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback para thumbnail de menor resolução se maxresdefault não existir
+                  (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`;
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <a 
+                  href={`https://www.youtube.com/watch?v=${video.youtube_id}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer"
+                >
+                  <PlayCircle size={36} />
+                </a>
+              </div>
+            </div>
+            <div className="p-4 flex-grow">
+              <h3 className="font-semibold text-gray-800 mb-1">{video.titulo}</h3>
+              <p className="text-gray-600 text-sm mb-3">{video.descricao}</p>
+            </div>
+            <div className="p-4 border-t border-gray-100 mt-auto">
+              <a 
+                href={`https://www.youtube.com/watch?v=${video.youtube_id}`} 
+                target="_blank"
+                rel="noopener noreferrer" 
+                className="w-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+              >
+                Assistir no YouTube
+                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </a>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };

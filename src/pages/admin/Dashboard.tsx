@@ -4,11 +4,8 @@ import { motion } from 'framer-motion';
 import { 
   Users, 
   Settings, 
-  BarChart3, 
   Package, 
   Layers, 
-  MessageSquare, 
-  Bell, 
   ShieldCheck,
   Cog,
   Lock,
@@ -21,72 +18,80 @@ import {
   UserPlus,
   Database,
   Code,
-  DownloadCloud,
-  HelpCircle,
-  Shield
+  FileText,
+  Download,
+  BookOpen,
+  BookOpenCheck,
+  Map,
+  DollarSign,
+  Music,
+  Trophy,
+  Share2,
+  Briefcase,
+  Video,
+  PlayCircle,
+  ArrowRight,
+  ImageIcon,
+  Award,
+  Bell,
+  MessageSquare,
+  Youtube
 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import type { UserProfile } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
+
+// Interface para as props do card
+interface AdminCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  badge?: number | null;
+}
 
 // Componente de cartão com hover effect aprimorado
-const AdminCard = ({ card, index }: { card: any, index: number }) => {
+const AdminCard = ({ title, description, icon, color, badge = null }: AdminCardProps) => {
   return (
-    <motion.div
-      key={card.title}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      whileHover={{ 
-        y: -5,
-        transition: { duration: 0.2 }
-      }}
-    >
-      <Link 
-        to={card.link}
-        className="group block h-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
-      >
-        <div className={`relative bg-gradient-to-r ${card.color} p-6 pb-10 overflow-hidden`}>
-          <motion.div 
-            className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mt-8 -mr-8 blur-2xl" 
-            animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 5, repeat: Infinity }}
-          />
-          <motion.div 
-            className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -mb-10 -ml-10 blur-xl"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-          />
-          
-          <div className="bg-white/20 w-16 h-16 rounded-xl flex items-center justify-center backdrop-blur-sm relative z-10 shadow-lg transform group-hover:scale-110 transition-transform duration-300">
-            {card.icon}
+    <div className={`bg-white p-6 rounded-xl shadow-md border border-gray-100 h-full hover:shadow-lg transition-shadow duration-300 relative`}>
+      {/* Badge para notificações */}
+      {badge !== null && badge > 0 && (
+        <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+          {badge > 99 ? '99+' : badge}
+        </div>
+      )}
+      
+      <div className="flex flex-col h-full">
+        <div className="mb-4">
+          <div className={`p-3 rounded-lg inline-block bg-gradient-to-r ${color}`}>
+            {icon}
           </div>
         </div>
-        
-        <div className="p-6 relative">
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300 text-emerald-500">
-            <ChevronRight size={20} />
-          </div>
-          
-          <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-emerald-600 transition-colors">
-            {card.title}
-          </h3>
-          <p className="text-gray-600">
-            {card.description}
-          </p>
-          
-          {card.stats && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center text-sm text-emerald-600 font-medium">
-                <Activity size={14} className="mr-1" />
-                {card.stats}
-              </div>
-            </div>
-          )}
+        <h3 className="text-lg font-semibold mb-2 text-gray-800">
+          {title}
+        </h3>
+        <p className="text-gray-600 flex-grow">
+          {description}
+        </p>
+        <div className="mt-4 inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">
+          <span>Acessar</span>
+          <ChevronRight className="h-4 w-4 ml-1" />
         </div>
-      </Link>
-    </motion.div>
+      </div>
+    </div>
   );
 };
+
+// Interface para os cards administrativos
+interface AdminCardType {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  link: string;
+  color: string;
+  stats?: string;
+  badge: number | null;
+}
 
 const AdminDashboard: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -97,6 +102,195 @@ const AdminDashboard: React.FC = () => {
     premiumUsers: 0,
     lastLogin: '—'
   });
+  
+  const [adminCards, setAdminCards] = useState<AdminCardType[]>([
+    {
+      title: 'Permissões de Usuários',
+      description: 'Gerencie planos e papéis dos usuários',
+      icon: <Users className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/user-permissions',
+      color: 'from-emerald-400 to-teal-500',
+      stats: `0 usuários ativos`,
+      badge: null,
+    },
+    {
+      title: 'Configurações',
+      description: 'Ajustes do sistema e da plataforma',
+      icon: <Settings className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/settings',
+      color: 'from-emerald-500 to-green-600',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de Banners',
+      description: 'Configure banners promocionais no dashboard',
+      icon: <ImageIcon className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/banner-management',
+      color: 'from-cyan-400 to-blue-500',
+      badge: null,
+    },
+    {
+      title: 'Gerenciar Produtos',
+      description: 'Crie e edite produtos da plataforma',
+      icon: <Package className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/products',
+      color: 'from-green-400 to-emerald-500',
+      badge: null,
+    },
+    {
+      title: 'Produtos de Afiliados',
+      description: 'Gerencie produtos para área do afiliado',
+      icon: <Users className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/affiliate-products',
+      color: 'from-blue-400 to-cyan-500',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de Comunidades',
+      description: 'Aprove e gerencie as comunidades enviadas',
+      icon: <Share2 className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/community-management',
+      color: 'from-violet-400 to-purple-500',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de Serviços',
+      description: 'Aprove e gerencie serviços de marketing digital',
+      icon: <Briefcase className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/service-management',
+      color: 'from-blue-400 to-indigo-500',
+      badge: null,
+    },
+    {
+      title: 'Galeria de Depoimentos',
+      description: 'Aprove imagens enviadas pelos usuários',
+      icon: <MessageSquare className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/testimonial-gallery',
+      color: 'from-pink-400 to-rose-500',
+      badge: null,
+    },
+    {
+      title: 'Players Recomendados',
+      description: 'Gerencie os influenciadores que recomendam a plataforma',
+      icon: <Users className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/players',
+      color: 'from-cyan-400 to-blue-500',
+      badge: null,
+    },
+    {
+      title: 'Conteúdo',
+      description: 'Gerencie páginas e conteúdo do site',
+      icon: <Layers className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/content',
+      color: 'from-emerald-300 to-teal-400',
+      badge: null,
+    },
+    {
+      title: 'Top Afiliados',
+      description: 'Gerencie os Top Afiliados exibidos na página principal',
+      icon: <Trophy className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/top-afiliados',
+      color: 'from-yellow-400 to-amber-500',
+      badge: null,
+    },
+    {
+      title: 'Ferramentas',
+      description: 'Gerencie ferramentas disponíveis na plataforma',
+      icon: <Wrench className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/tools',
+      color: 'from-blue-300 to-cyan-400',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de Desafios',
+      description: 'Crie e gerencie desafios de aprendizado',
+      icon: <Award className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/challenges',
+      color: 'from-orange-400 to-red-500',
+      badge: null,
+    },
+    {
+      title: 'Trend Rush',
+      description: 'Gerenciar áudios do Trend Rush',
+      icon: <Music className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/trend-rush',
+      color: 'from-indigo-400 to-violet-500',
+      badge: null,
+    },
+    {
+      title: 'Pacotes Gratuitos',
+      description: 'Gerencie pacotes para download gratuito',
+      icon: <Download className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/free-packs',
+      color: 'from-blue-400 to-cyan-500',
+      badge: null,
+    },
+    {
+      title: 'Mapas Mentais',
+      description: 'Gerencie mapas mentais disponíveis',
+      icon: <Map className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/mind-maps',
+      color: 'from-teal-300 to-emerald-400',
+      badge: null,
+    },
+    {
+      title: 'Estratégias de Vendas',
+      description: 'Gerenciar técnicas e métodos de vendas',
+      icon: <DollarSign className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/sales-strategies',
+      color: 'from-indigo-400 to-blue-500',
+      badge: null,
+    },
+    {
+      title: 'eBooks e PDFs',
+      description: 'Gerencie materiais para download',
+      icon: <FileText className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/ebooks',
+      color: 'from-teal-400 to-cyan-500',
+      badge: null,
+    },
+    {
+      title: 'Sugestões de eBooks',
+      description: 'Gerenciar sugestões enviadas por usuários',
+      icon: <BookOpenCheck className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/ebook-suggestions',
+      color: 'from-emerald-600 to-teal-500',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de API',
+      description: 'Configure integrações e APIs',
+      icon: <Code className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/api',
+      color: 'from-green-500 to-teal-600',
+      badge: null,
+    },
+    {
+      title: 'Vídeos de Afiliados',
+      description: 'Gerencie o vídeo tutorial de afiliados',
+      icon: <Youtube className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/affiliate-videos',
+      color: 'from-red-500 to-pink-600',
+      badge: null,
+    },
+    {
+      title: 'Gerenciamento de Novidades',
+      description: 'Gerencie as novidades exibidas na plataforma',
+      icon: <Bell className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/novidades',
+      color: 'from-purple-400 to-pink-500',
+      badge: null,
+    },
+    {
+      title: 'Vídeos Tutoriais',
+      description: 'Gerencie os vídeos exibidos no dashboard',
+      icon: <Video className="h-8 w-8 text-white" />,
+      link: '/dashboard/admin/tutorial-videos',
+      color: 'from-green-400 to-emerald-500',
+      badge: null,
+    },
+  ]);
+  
   const navigate = useNavigate();
 
   // Função para buscar todos os usuários do Supabase
@@ -125,6 +319,19 @@ const AdminDashboard: React.FC = () => {
           premiumUsers,
           lastLogin: new Date().toLocaleString('pt-BR')
         });
+        
+        // Atualizar o stats no adminCards
+        setAdminCards(currentCards => {
+          return currentCards.map(card => {
+            if (card.title === 'Permissões de Usuários') {
+              return {
+                ...card,
+                stats: `${totalUsers} usuários ativos`
+              };
+            }
+            return card;
+          });
+        });
       }
     } catch (err) {
       console.error('Erro ao calcular estatísticas de usuários:', err);
@@ -136,6 +343,7 @@ const AdminDashboard: React.FC = () => {
       setIsLoading(true);
       
       try {
+        console.log("Verificando status de administrador...");
         const { isAdmin: adminStatus, error } = await userService.isSpecificAdmin();
         
         if (error) {
@@ -148,6 +356,7 @@ const AdminDashboard: React.FC = () => {
           return;
         }
         
+        console.log("Status de administrador:", adminStatus);
         setIsAdmin(adminStatus);
         
         if (!adminStatus) {
@@ -173,6 +382,42 @@ const AdminDashboard: React.FC = () => {
     
     checkAdminStatus();
   }, [navigate]);
+
+  // Função para buscar contadores
+  const fetchBadgeCounts = async () => {
+    try {
+      // Carregar contagem de sugestões pendentes
+      const { data, error } = await supabase
+        .from('ebook_suggestions')
+        .select('*', { count: 'exact' })
+        .eq('status', 'pending');
+      
+      if (error) {
+        console.error("Erro ao buscar contagem de sugestões:", error);
+        return;
+      }
+      
+      const pendingSuggestions = data?.length || 0;
+      
+      // Atualizar o badge do card de sugestões
+      setAdminCards(prevCards => 
+        prevCards.map(card => 
+          card.title === "Sugestões de eBooks" 
+            ? { ...card, badge: pendingSuggestions } 
+            : card
+        )
+      );
+    } catch (err) {
+      console.error("Erro ao buscar contadores:", err);
+    }
+  };
+
+  // Buscar contadores quando o componente carregar e for admin
+  useEffect(() => {
+    if (isAdmin && !isLoading) {
+      fetchBadgeCounts();
+    }
+  }, [isAdmin, isLoading]);
 
   if (isLoading) {
     return (
@@ -202,7 +447,7 @@ const AdminDashboard: React.FC = () => {
           className="bg-white rounded-xl shadow-lg p-8 max-w-md relative overflow-hidden"
         >
           <motion.div 
-            className="absolute -z-10 top-0 right-0 w-64 h-64 bg-red-100 rounded-full -mt-20 -mr-20 blur-2xl"
+            className="absolute -z-10 top-0 right-0 w-64 h-64 bg-emerald-100 rounded-full -mt-20 -mr-20 blur-2xl"
             animate={{ opacity: [0.5, 0.7, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
           />
@@ -212,9 +457,9 @@ const AdminDashboard: React.FC = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
-              className="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="bg-emerald-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <Lock className="h-10 w-10 text-red-500" />
+              <Lock className="h-10 w-10 text-emerald-500" />
             </motion.div>
             
             <motion.h1 
@@ -258,95 +503,6 @@ const AdminDashboard: React.FC = () => {
       </div>
     );
   }
-
-  const adminCards = [
-    {
-      title: 'Permissões de Usuários',
-      description: 'Gerencie planos e papéis dos usuários',
-      icon: <Users className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/user-permissions',
-      color: 'from-emerald-400 to-teal-500',
-      stats: `${stats.totalUsers} usuários ativos`
-    },
-    {
-      title: 'Configurações',
-      description: 'Ajustes do sistema e da plataforma',
-      icon: <Settings className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/settings',
-      color: 'from-blue-400 to-indigo-500'
-    },
-    {
-      title: 'Estatísticas',
-      description: 'Visualize métricas e relatórios',
-      icon: <BarChart3 className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/statistics',
-      color: 'from-purple-400 to-pink-500',
-      stats: `${stats.premiumUsers} usuários premium`
-    },
-    {
-      title: 'Gerenciar Produtos',
-      description: 'Crie e edite produtos da plataforma',
-      icon: <Package className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/products',
-      color: 'from-orange-400 to-red-500'
-    },
-    {
-      title: 'Conteúdo',
-      description: 'Gerencie páginas e conteúdo do site',
-      icon: <Layers className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/content',
-      color: 'from-yellow-400 to-amber-500'
-    },
-    {
-      title: 'Mensagens',
-      description: 'Administre mensagens e comunicações',
-      icon: <MessageSquare className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/messages',
-      color: 'from-indigo-400 to-violet-500'
-    },
-    {
-      title: 'Notificações',
-      description: 'Configure notificações do sistema',
-      icon: <Bell className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/notifications',
-      color: 'from-red-400 to-rose-500'
-    },
-    {
-      title: 'Manutenção',
-      description: 'Ferramentas de manutenção do sistema',
-      icon: <Wrench className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/maintenance',
-      color: 'from-gray-400 to-slate-500'
-    },
-    {
-      title: 'Gerenciamento de API',
-      description: 'Configure integrações e APIs',
-      icon: <Code className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/api',
-      color: 'from-cyan-400 to-blue-500'
-    },
-    {
-      title: 'Backup de Dados',
-      description: 'Gerenciar backups e restauração',
-      icon: <DownloadCloud className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/backup',
-      color: 'from-emerald-500 to-green-600'
-    },
-    {
-      title: 'Suporte Avançado',
-      description: 'Ferramentas para suporte técnico',
-      icon: <HelpCircle className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/support',
-      color: 'from-amber-400 to-orange-500'
-    },
-    {
-      title: 'Segurança',
-      description: 'Configure opções de segurança',
-      icon: <Shield className="h-8 w-8 text-white" />,
-      link: '/dashboard/admin/security',
-      color: 'from-blue-500 to-indigo-600'
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 py-8 px-4 sm:px-8">
@@ -438,7 +594,27 @@ const AdminDashboard: React.FC = () => {
         {/* Grid de cartões com animação de entrada */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {adminCards.map((card, index) => (
-            <AdminCard key={card.title} card={card} index={index} />
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="col-span-1"
+            >
+              <Link
+                to={card.link}
+                className="block h-full"
+                onClick={() => console.log(`Navegando para: ${card.link}`)}
+              >
+                <AdminCard
+                  title={card.title}
+                  description={card.description}
+                  icon={card.icon}
+                  color={card.color}
+                  badge={card.badge}
+                />
+              </Link>
+            </motion.div>
           ))}
         </div>
         

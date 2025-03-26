@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, X, User, Link, DollarSign, Mail, Instagram, Star } from 'lucide-react';
+import { Send, X, User, Link, DollarSign, Mail, Instagram, Star, ShoppingBag } from 'lucide-react';
 import ReactDOM from 'react-dom';
+import AffiliateProductSubmitForm from './AffiliateProductSubmitForm';
 
 // Interface para os dados do formulário
 interface AffiliateFormData {
@@ -24,6 +25,7 @@ interface AffiliateFormModalProps {
 const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
   
   // Estado para os dados do formulário
   const [formData, setFormData] = useState<AffiliateFormData>({
@@ -54,6 +56,14 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
   // Função para atualizar os dados do formulário
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Se o usuário escolher o tipo "produto_afiliado", mostrar o formulário de produto
+    if (name === 'tipo' && value === 'produto_afiliado') {
+      setShowProductForm(true);
+    } else if (name === 'tipo') {
+      setShowProductForm(false);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -95,8 +105,14 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
     if (submitSuccess) {
       setTimeout(() => {
         setSubmitSuccess(false);
+        setShowProductForm(false);
       }, 300);
     }
+  };
+  
+  const handleProductSubmitSuccess = () => {
+    setSubmitSuccess(true);
+    setShowProductForm(false);
   };
   
   if (!isOpen) return null;
@@ -125,12 +141,11 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
             <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pt-1 pb-3 z-10 border-b border-gray-100 shadow-sm">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <Send className="text-emerald-500" size={20} />
-                {formData.tipo === 'produto' && 'Enviar Produto'}
-                {formData.tipo === 'top_afiliado' && 'Enviar Top Afiliado'}
-                {formData.tipo === 'mais_vendido' && 'Enviar Produto Mais Vendido'}
-                {formData.tipo === 'mais_afiliados' && 'Enviar Produto com Mais Afiliados'}
-                {formData.tipo === 'perfil_completo' && 'Enviar Perfil Completo'}
-                {formData.tipo === 'depoimento' && 'Enviar Depoimento'}
+                {showProductForm && 'Enviar Produto para Aprovação'}
+                {!showProductForm && formData.tipo === 'produto' && 'Enviar Produto'}
+                {!showProductForm && formData.tipo === 'produto_afiliado' && 'Enviar Produto para Afiliação'}
+                {!showProductForm && formData.tipo === 'top_afiliado' && 'Enviar Top Afiliado'}
+                {!showProductForm && formData.tipo === 'depoimento' && 'Enviar Depoimento'}
               </h2>
               <button 
                 onClick={handleCloseModal}
@@ -154,10 +169,8 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
                 <h3 className="text-lg font-semibold text-emerald-800 mb-2">Dados Enviados com Sucesso!</h3>
                 <p className="text-emerald-600 mb-4">
                   {formData.tipo === 'produto' && 'Seu produto foi enviado e será analisado pela nossa equipe.'}
+                  {formData.tipo === 'produto_afiliado' && 'Seu produto foi enviado para aprovação. Nossa equipe irá analisá-lo em breve.'}
                   {formData.tipo === 'top_afiliado' && 'O perfil do afiliado foi enviado para análise como Top Afiliado.'}
-                  {formData.tipo === 'mais_vendido' && 'O produto foi enviado para análise como Mais Vendido.'}
-                  {formData.tipo === 'mais_afiliados' && 'O produto foi enviado para análise como destaque em Mais Afiliados.'}
-                  {formData.tipo === 'perfil_completo' && 'O perfil completo foi enviado para análise.'}
                   {formData.tipo === 'depoimento' && 'Seu depoimento foi enviado para análise.'}
                 </p>
                 <button
@@ -167,8 +180,14 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
                   Fechar
                 </button>
               </motion.div>
+            ) : showProductForm ? (
+              // Formulário de envio de produto para afiliados
+              <AffiliateProductSubmitForm 
+                onSuccess={handleProductSubmitSuccess} 
+                onCancel={() => setShowProductForm(false)} 
+              />
             ) : (
-              // Formulário
+              // Formulário padrão
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">
@@ -183,9 +202,31 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
                     className="w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
                   >
                     <option value="produto">Produto Próprio</option>
+                    <option value="produto_afiliado">Produto para Afiliação</option>
                     <option value="top_afiliado">Top Afiliado</option>
+                    <option value="depoimento">Depoimento</option>
                   </select>
                 </div>
+
+                {/* Nova opção para enviar produtos para afiliados */}
+                {formData.tipo === 'produto_afiliado' && (
+                  <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+                    <div className="w-16 h-16 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+                      <ShoppingBag className="text-emerald-500" size={24} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-emerald-800 mb-2">Enviar Produto para Afiliação</h3>
+                    <p className="text-emerald-600 mb-4">
+                      Preencha o formulário de produto detalhado para que ele seja revisado pela nossa equipe.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowProductForm(true)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                )}
                 
                 {/* Campos específicos baseados no tipo selecionado */}
                 {formData.tipo === 'produto' && (
@@ -407,167 +448,6 @@ const AffiliateFormModal: React.FC<AffiliateFormModalProps> = ({ isOpen, onClose
                               placeholder="Nome do produto que promove"
                             />
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {(formData.tipo === 'mais_vendido' || formData.tipo === 'mais_afiliados') && (
-                  <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                    <h3 className="text-md font-medium text-gray-700 mb-3 border-b pb-2">Informações do Produto</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label htmlFor="produto" className="block text-sm font-medium text-gray-700 mb-1">
-                          Nome do Produto*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Star className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="text"
-                            id="produto"
-                            name="produto"
-                            value={formData.produto}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Nome do produto"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-                          Nome do Criador*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="text"
-                            id="nome"
-                            name="nome"
-                            value={formData.nome}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Nome de quem criou o produto"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="comissao" className="block text-sm font-medium text-gray-700 mb-1">
-                          Comissão Oferecida*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <DollarSign className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="text"
-                            id="comissao"
-                            name="comissao"
-                            value={formData.comissao}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Ex: 50% ou R$ 100,00 por venda"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {formData.tipo === 'perfil_completo' && (
-                  <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-                    <h3 className="text-md font-medium text-gray-700 mb-3 border-b pb-2">Informações do Afiliado</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-                          Nome do Afiliado*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="text"
-                            id="nome"
-                            name="nome"
-                            value={formData.nome}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Nome do afiliado"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                          E-mail de Contato*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="E-mail para contato"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="instagram" className="block text-sm font-medium text-gray-700 mb-1">
-                          Instagram*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Instagram className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="text"
-                            id="instagram"
-                            name="instagram"
-                            value={formData.instagram}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="@seuinstagram"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="site" className="block text-sm font-medium text-gray-700 mb-1">
-                          Site ou Blog*
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Link className="text-gray-400" size={16} />
-                          </div>
-                          <input
-                            type="url"
-                            id="site"
-                            name="site"
-                            value={formData.site}
-                            onChange={handleInputChange}
-                            required
-                            className="pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="https://seusite.com.br"
-                          />
                         </div>
                       </div>
                     </div>

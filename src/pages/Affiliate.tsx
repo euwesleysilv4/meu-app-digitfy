@@ -4,6 +4,7 @@ import { Users, TrendingUp, DollarSign, Star, BarChart, ArrowRight, Lock, AlertC
 import { usePermissions } from '../services/permissionService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AffiliateFormModal from '../components/AffiliateFormModal';
+import { AffiliateProduct, affiliateProductService } from '../../app/services/affiliateProductService';
 
 const Affiliate = () => {
   const { userPlan, hasAccess } = usePermissions();
@@ -14,11 +15,42 @@ const Affiliate = () => {
   
   // Estado para controlar o modal
   const [showModal, setShowModal] = useState(false);
+  // Estado para armazenar os produtos carregados do banco de dados
+  const [products, setProducts] = useState<AffiliateProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Log para diagnóstico
   console.log("Plano atual na página Affiliate:", userPlan);
   console.log("É plano gratuito:", isFreePlan);
   console.log("Pode enviar dados de afiliados:", canSendAffiliateData);
+  
+  // Carregar produtos da tabela affiliate_products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        // Usar o serviço para buscar produtos ativos
+        const { data, error } = await affiliateProductService.listActiveProducts();
+        
+        if (error) {
+          console.error('Erro ao buscar produtos de afiliados:', error);
+          setError('Não foi possível carregar os produtos.');
+        } else {
+          console.log('Produtos carregados:', data);
+          setProducts(data || []);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Exceção ao buscar produtos de afiliados:', err);
+        setError('Ocorreu um erro ao carregar os produtos.');
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
   
   // Verificar se o usuário foi redirecionado da página AffiliateArea
   useEffect(() => {
@@ -43,65 +75,8 @@ const Affiliate = () => {
   const handleCloseModal = () => {
     setShowModal(false);
   };
-  
-  const products = [
-    {
-      name: 'Curso Completo de Marketing Digital',
-      platform: 'Hotmart',
-      commission: '70%',
-      price: 'R$ 997,00',
-      earnings: 'R$ 697,90',
-      ranking: 4.8,
-      sales: 1500,
-      category: 'Marketing Digital',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=300&h=200'
-    },
-    {
-      name: 'Programa Expert em SEO',
-      platform: 'Hotmart',
-      commission: '60%',
-      price: 'R$ 1.497,00',
-      earnings: 'R$ 898,20',
-      ranking: 4.9,
-      sales: 2200,
-      category: 'SEO',
-      image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=300&h=200'
-    },
-    {
-      name: 'Mentoria Tráfego Pago',
-      platform: 'Eduzz',
-      commission: '50%',
-      price: 'R$ 2.997,00',
-      earnings: 'R$ 1.498,50',
-      ranking: 4.7,
-      sales: 800,
-      category: 'Tráfego Pago',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=300&h=200'
-    },
-    {
-      name: 'Copywriting Avançado',
-      platform: 'Hotmart',
-      commission: '65%',
-      price: 'R$ 797,00',
-      earnings: 'R$ 518,05',
-      ranking: 4.8,
-      sales: 1200,
-      category: 'Copywriting',
-      image: 'https://images.unsplash.com/photo-1455849318743-b2233052fcff?auto=format&fit=crop&q=80&w=300&h=200'
-    },
-    {
-      name: 'Programa de Lançamentos',
-      platform: 'Monetizze',
-      commission: '55%',
-      price: 'R$ 1.997,00',
-      earnings: 'R$ 1.098,35',
-      ranking: 4.9,
-      sales: 950,
-      category: 'Marketing Digital',
-      image: 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&q=80&w=300&h=200'
-    }
-  ];
 
+  // Obter categorias únicas dos produtos
   const categories = [...new Set(products.map(product => product.category))];
 
   return (
@@ -177,65 +152,105 @@ const Affiliate = () => {
         )}
       </motion.div>
 
+      {/* Exibir indicador de carregamento */}
+      {isLoadingProducts && (
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+        </div>
+      )}
+
+      {/* Exibir mensagem de erro */}
+      {error && !isLoadingProducts && (
+        <div className="p-6 bg-red-50 rounded-xl border border-red-100 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-red-500 mt-1" size={20} />
+            <div>
+              <h3 className="font-medium text-red-800">Erro ao carregar produtos</h3>
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagem quando não há produtos */}
+      {!isLoadingProducts && !error && products.length === 0 && (
+        <div className="p-6 bg-amber-50 rounded-xl border border-amber-100 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="text-amber-500 mt-1" size={20} />
+            <div>
+              <h3 className="font-medium text-amber-800">Nenhum produto disponível</h3>
+              <p className="text-amber-700">Não há produtos disponíveis para divulgação no momento.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Products Grid */}
-      <motion.div 
-        className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        {products.map((product, index) => (
-          <motion.div
-            key={index}
-            className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="relative">
-              <img 
-                src={product.image} 
-                alt={product.name}
-                className="w-full h-48 object-cover"
-              />
-              <span className="absolute top-4 right-4 bg-white/90 text-emerald-600 px-3 py-1 rounded-full text-sm">
-                {product.platform}
-              </span>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">{product.name}</h3>
-                <div className="flex items-center space-x-1">
-                  <Star className="text-yellow-400 fill-current" size={16} />
-                  <span className="font-medium">{product.ranking}</span>
-                </div>
+      {!isLoadingProducts && !error && products.length > 0 && (
+        <motion.div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {products.map((product, index) => (
+            <motion.div
+              key={product.id || index}
+              className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all flex flex-col h-full"
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="relative">
+                <img 
+                  src={product.image_url || product.image} 
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                />
+                <span className="absolute top-4 right-4 bg-white/90 text-emerald-600 px-3 py-1 rounded-full text-sm">
+                  {product.vendor_name || product.platform || 'Hotmart'}
+                </span>
               </div>
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Preço do Produto:</span>
-                  <span className="font-semibold text-gray-900">{product.price}</span>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{product.name}</h3>
+                  <div className="flex items-center space-x-1">
+                    <Star className="text-yellow-400 fill-current" size={16} />
+                    <span className="font-medium">4.8</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Comissão:</span>
-                  <span className="font-semibold text-emerald-600">{product.commission}</span>
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Preço do Produto:</span>
+                    <span className="font-semibold text-gray-900">{product.price_display}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Comissão:</span>
+                    <span className="font-semibold text-emerald-600">{`${product.commission_rate || 50}%`}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Ganhos por Venda:</span>
+                    <span className="font-bold text-emerald-600">
+                      {`R$ ${((product.price * (product.commission_rate || 50)) / 100).toFixed(2).replace('.', ',')}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Vendas Totais:</span>
+                    <span className="font-semibold text-gray-900">-</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Ganhos por Venda:</span>
-                  <span className="font-bold text-emerald-600">{product.earnings}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Vendas Totais:</span>
-                  <span className="font-semibold text-gray-900">{product.sales}</span>
-                </div>
+                <a 
+                  href={product.affiliate_link || product.sales_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-auto py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+                >
+                  <span>Tornar-se Afiliado</span>
+                  <ArrowRight size={18} />
+                </a>
               </div>
-              <button 
-                className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all hover:scale-105 flex items-center justify-center space-x-2"
-              >
-                <span>Tornar-se Afiliado</span>
-                <ArrowRight size={18} />
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
     </div>
   );
 };

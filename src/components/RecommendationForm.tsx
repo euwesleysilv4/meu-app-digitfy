@@ -36,7 +36,7 @@ const Overlay = ({ onClose }: { onClose: () => void }) => (
 
 const RecommendationForm: React.FC<RecommendationFormProps> = ({ isOpen, onClose }) => {
   const { hasAccess } = usePermissions();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const hasFeaturedProducts = hasAccess('featuredProductListing');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,32 +110,69 @@ const RecommendationForm: React.FC<RecommendationFormProps> = ({ isOpen, onClose
         throw new Error('Adicione pelo menos dois benefícios para o produto');
       }
 
-      // Enviar para o Supabase
-      const { data, error } = await supabase
-        .from('recommended_products')
-        .insert([
-          {
-            user_id: user?.id,
-            name: formData.name,
-            description: formData.description,
-            price: formData.price,
-            benefits: formData.benefits.filter(benefit => benefit.trim() !== ''),
-            category: formData.category,
-            image_url: formData.imageUrl,
-            sales_url: formData.salesUrl,
-            is_featured: formData.featured,
-            status: 'pending', // pending, approved, rejected
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select();
-      
-      if (error) {
-        console.error('Erro do Supabase:', error);
-        throw error;
+      // Verificar e atualizar autenticação
+      if (!user?.id) {
+        throw new Error('Usuário não identificado. Por favor, faça login novamente.');
       }
       
-      console.log('Produto enviado com sucesso:', data);
+      // Atualizar o perfil para garantir que a sessão está válida
+      try {
+        await refreshProfile();
+        console.log('Perfil do usuário atualizado com sucesso');
+      } catch (refreshError) {
+        console.error('Erro ao atualizar o perfil:', refreshError);
+        throw new Error('Erro de autenticação. Por favor, faça login novamente.');
+      }
+
+      // Preparar objeto de dados
+      const productData = {
+        userId: user.id,
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        benefits: formData.benefits.filter(benefit => benefit.trim() !== ''),
+        category: formData.category,
+        image: formData.imageUrl,
+        sales_url: formData.salesUrl,
+        eliteBadge: formData.featured,
+        status: 'pendente',
+        submittedAt: new Date().toISOString()
+      };
+
+      console.log('Objeto de produto preparado:', productData);
+
+      // Verificar se a tabela existe (debug)
+      console.log('1. Verificando se a tabela submitted_products existe');
+      const { data: tableTest, error: tableError } = await supabase
+        .from('submitted_products')
+        .select('id')
+        .limit(1);
+      
+      console.log('2. Teste de tabela:', tableTest ? 'OK' : 'Falha', tableError ? `Erro: ${tableError.message}` : 'Sem erro');
+      
+      if (tableError) {
+        if (tableError.message.includes('does not exist')) {
+          throw new Error('A tabela submitted_products não existe no banco de dados. Execute o script SQL para criar a tabela.');
+        }
+        throw tableError;
+      }
+    
+      // Realizar a inserção
+      console.log('3. Tentando inserir produto na tabela submitted_products');
+      const { data, error } = await supabase
+        .from('submitted_products')
+        .insert([productData])
+        .select();
+      
+      console.log('4. Resultado da inserção:', data ? 'Dados retornados' : 'Sem dados', 
+                  error ? `Erro: ${error.message}` : 'Sem erro');
+      
+      if (error) {
+        console.error('Erro detalhado do Supabase:', error);
+        throw error;
+      }
+    
+      console.log('5. Produto enviado com sucesso:', data);
       
       // Ativar estado de sucesso
       setIsSuccess(true);
@@ -158,7 +195,29 @@ const RecommendationForm: React.FC<RecommendationFormProps> = ({ isOpen, onClose
       
     } catch (error) {
       console.error('Erro ao enviar produto:', error);
-      setError(error instanceof Error ? error.message : 'Erro desconhecido ao enviar produto');
+      
+      // Tratamento de erros mais específico
+      if (error instanceof Error) {
+        // Erro padrão do JavaScript
+        setError(error.message);
+      } else if (typeof error === 'object' && error !== null) {
+        // Erro do Supabase ou outro objeto de erro
+        const supabaseError = error as any;
+        
+        if (supabaseError.message) {
+          setError(`Erro: ${supabaseError.message}`);
+        } else if (supabaseError.error) {
+          setError(`Erro: ${supabaseError.error}`);
+        } else if (supabaseError.details) {
+          setError(`Erro: ${supabaseError.details}`);
+        } else {
+          // Transformar objeto de erro em string para depuração
+          setError(`Erro técnico: ${JSON.stringify(error)}`);
+        }
+      } else {
+        // Fallback para outros tipos de erro
+        setError('Erro desconhecido ao enviar produto. Por favor, tente novamente ou entre em contato com o suporte.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -378,6 +437,17 @@ const RecommendationForm: React.FC<RecommendationFormProps> = ({ isOpen, onClose
                             Dica: O site <a href="https://postimages.org/" target="_blank" rel="noopener noreferrer" className="font-medium underline hover:text-teal-700 mx-1">PostImage</a> é uma ótima opção para fazer upload e obter o link da sua imagem.
                           </span>
                         </p>
+                        
+                        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-sm text-amber-700 flex items-start gap-2">
+                            <svg className="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>
+                              <strong className="font-medium">Aviso importante:</strong> O tempo para aprovação do infoproduto varia de acordo com a demanda e a qualidade das informações fornecidas. Nossa equipe analisa cada produto cuidadosamente e garante a aprovação no menor tempo possível.
+                            </span>
+                          </p>
+                        </div>
                       </div>
                       
                       <div className="flex justify-end space-x-4 pt-4">

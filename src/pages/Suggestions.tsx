@@ -4,6 +4,7 @@ import { useState } from "react";
 
 const Suggestions = () => {
   const [formData, setFormData] = useState({
+    name: "",
     title: "",
     description: "",
     category: ""
@@ -16,12 +17,42 @@ const Suggestions = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const formatWhatsAppMessage = (data: typeof formData) => {
+    return [
+      '🎯 *NOVA SUGESTÃO - DIGITFY*',
+      '━━━━━━━━━━━━━━━━',
+      '',
+      `👤 *Nome:*\n${data.name || 'Não informado'}`,
+      '',
+      `📌 *Título:*\n${data.title || 'Não informado'}`,
+      '',
+      `🏷️ *Categoria:*\n${data.category || 'Não informada'}`,
+      '',
+      `📝 *Descrição:*\n${data.description || 'Não informada'}`,
+      '',
+      '━━━━━━━━━━━━━━━━'
+    ].join('\n');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica para enviar os dados
-    console.log("Sugestão enviada:", formData);
+    
+    // Formatar a mensagem para o WhatsApp (com %0A para quebras de linha na URL)
+    const message = formatWhatsAppMessage(formData).replace(/\n/g, '%0A');
+
+    // Número do WhatsApp (substitua pelo número correto)
+    const whatsappNumber = "5511999999999"; // Substitua pelo número real
+
+    // Criar o link do WhatsApp
+    const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+    // Abrir o WhatsApp em uma nova aba
+    window.open(whatsappLink, '_blank');
+
+    // Resetar o formulário e mostrar confirmação
     setIsSubmitted(true);
     setFormData({
+      name: "",
       title: "",
       description: "",
       category: ""
@@ -29,7 +60,7 @@ const Suggestions = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -44,21 +75,38 @@ const Suggestions = () => {
               Sugestões
             </h1>
             <p className="text-gray-600 mt-1">
-              Envie suas ideias para melhorar a plataforma Digitalfy
+              Envie suas ideias para melhorar a plataforma DigitFy
             </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Formulário */}
-      <motion.form
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6"
-      >
-        <div className="space-y-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Formulário */}
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          onSubmit={handleSubmit}
+          className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6"
+        >
+          {/* Nome */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Seu Nome
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+              placeholder="Digite seu nome completo"
+              required
+            />
+          </div>
+          
           {/* Título da Sugestão */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -122,32 +170,47 @@ const Suggestions = () => {
           </div>
 
           {/* Botão de Enviar */}
-          <div className="pt-4">
+          <div>
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
             >
-              Enviar Sugestão
+              Enviar Sugestão via WhatsApp
             </button>
           </div>
+        </motion.form>
 
-          {/* Aviso de Incentivo */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 text-center"
-          >
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Gift className="w-6 h-6 text-emerald-500 animate-bounce" />
-              <h3 className="text-lg font-semibold text-emerald-600">Benefício Especial!</h3>
-            </div>
-            <p className="text-base text-gray-700">
-              Caso sua sugestão seja aceita ou implementada, você ganhará um <span className="font-bold">acesso anual ao melhor plano da Digitalfy</span>, com direito a todas as ferramentas e funcionalidades premium!
-            </p>
-          </motion.div>
+        {/* Preview do WhatsApp */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-[#efeae2] rounded-2xl shadow-lg border border-gray-200 p-6"
+        >
+          <div className="bg-[#128C7E] text-white px-4 py-2 rounded-t-lg mb-4 -mt-6 -mx-6">
+            <h2 className="text-lg font-semibold">Preview do WhatsApp</h2>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm whitespace-pre-wrap font-[system-ui] text-[15px]">
+            {formatWhatsAppMessage(formData)}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Aviso de Incentivo */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 text-center"
+      >
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Gift className="w-6 h-6 text-emerald-500 animate-bounce" />
+          <h3 className="text-lg font-semibold text-emerald-600">Benefício Especial!</h3>
         </div>
-      </motion.form>
+        <p className="text-base text-gray-700">
+          Caso sua sugestão seja aceita ou implementada, você ganhará um <span className="font-bold">acesso anual ao melhor plano da DigitFy</span>, com direito a todas as ferramentas e funcionalidades premium!
+        </p>
+      </motion.div>
 
       {/* Popup de Confirmação */}
       {isSubmitted && (

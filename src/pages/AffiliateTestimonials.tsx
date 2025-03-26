@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Download, 
@@ -9,46 +9,58 @@ import {
   User,
   Plus,
   Check,
-  Search
+  Search,
+  RefreshCw
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import ImageUploadModal from '../components/ImageUploadModal';
+import { supabase } from '../lib/supabase';
+import { useToast } from '../hooks/useToast';
 
 interface TestimonialImage {
   id: string;
-  url: string;
+  image_url: string;
   type: 'sale' | 'testimonial';
+  name?: string;
+  product?: string;
 }
 
-const testimonialImages: TestimonialImage[] = [
-  { 
-    id: 'img-1', 
-    url: 'https://exemplo.com/imagem1.jpg',
-    type: 'sale'
-  },
-  { 
-    id: 'img-2', 
-    url: 'https://exemplo.com/imagem2.jpg',
-    type: 'testimonial'
-  },
-  { id: 'img-3', url: 'https://exemplo.com/imagem3.jpg', type: 'sale' },
-  { id: 'img-4', url: 'https://exemplo.com/imagem4.jpg', type: 'testimonial' },
-  { id: 'img-5', url: 'https://exemplo.com/imagem5.jpg', type: 'sale' },
-  { id: 'img-6', url: 'https://exemplo.com/imagem6.jpg', type: 'testimonial' },
-  { id: 'img-7', url: 'https://exemplo.com/imagem7.jpg', type: 'sale' },
-  { id: 'img-8', url: 'https://exemplo.com/imagem8.jpg', type: 'testimonial' },
-  { id: 'img-9', url: 'https://exemplo.com/imagem9.jpg', type: 'sale' },
-  { id: 'img-10', url: 'https://exemplo.com/imagem10.jpg', type: 'testimonial' },
-  { id: 'img-11', url: 'https://exemplo.com/imagem11.jpg', type: 'sale' },
-  { id: 'img-12', url: 'https://exemplo.com/imagem12.jpg', type: 'testimonial' },
-];
-
 const AffiliateTestimonials: React.FC = () => {
+  const { showToast } = useToast();
+  const [testimonialImages, setTestimonialImages] = useState<TestimonialImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<TestimonialImage | null>(null);
   const [filter, setFilter] = useState<'all' | 'sale' | 'testimonial'>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAffiliateModal, setShowAffiliateModal] = useState(false);
   const navigate = useNavigate();
+
+  // Carregar imagens aprovadas do banco de dados
+  useEffect(() => {
+    fetchApprovedImages();
+  }, []);
+
+  const fetchApprovedImages = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('testimonial_gallery')
+        .select('id, image_url, type, name, product')
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      setTestimonialImages(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar imagens:', error.message);
+      showToast('Erro ao carregar imagens aprovadas', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDownload = (url: string) => {
     const link = document.createElement('a');
@@ -74,11 +86,9 @@ const AffiliateTestimonials: React.FC = () => {
   };
 
   const handleImageUpload = (imageData: { imageUrl: string, type: 'sale' | 'testimonial' }) => {
-    // Aqui você implementaria o envio do link da imagem para o servidor
-    console.log('Link da imagem enviado:', imageData);
-    
-    // Simular sucesso no envio
-    alert('Link da imagem enviado com sucesso! Será analisada antes de aparecer na galeria.');
+    showToast('Imagem enviada com sucesso! Será analisada antes de aparecer na galeria.', 'success');
+    // Fechar o modal
+    handleCloseUploadModal();
   };
 
   const filteredImages = filter === 'all' 
@@ -92,74 +102,67 @@ const AffiliateTestimonials: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
             Galeria de Depoimentos
           </h1>
 
           {/* Filtros */}
-          <div className="flex space-x-2 items-center">
-            <Filter className="text-gray-500 mr-2" />
-            <button 
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button
               onClick={() => setFilter('all')}
-              className={`
-                px-3 py-1 rounded-full text-sm transition-all
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all
                 ${filter === 'all' 
                   ? 'bg-emerald-500 text-white' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-emerald-100'
-                }
-              `}
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               Todos
             </button>
-            <button 
+            <button
               onClick={() => setFilter('sale')}
-              className={`
-                px-3 py-1 rounded-full text-sm transition-all
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all
                 ${filter === 'sale' 
                   ? 'bg-emerald-500 text-white' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-emerald-100'
-                }
-              `}
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
-              Vendas
+              Prints de Vendas
             </button>
-            <button 
+            <button
               onClick={() => setFilter('testimonial')}
-              className={`
-                px-3 py-1 rounded-full text-sm transition-all
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all
                 ${filter === 'testimonial' 
                   ? 'bg-emerald-500 text-white' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-emerald-100'
-                }
-              `}
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               Depoimentos
             </button>
           </div>
         </motion.div>
 
-        {/* Banner de Envio de Imagem */}
+        {/* Banner de Upload */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+          className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4 sm:p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         >
           <div>
-            <h2 className="text-xl font-bold text-emerald-800 mb-2">
+            <h2 className="text-lg sm:text-xl font-bold text-emerald-800 mb-2">
               Compartilhe sua História
             </h2>
-            <p className="text-emerald-700">
+            <p className="text-emerald-700 text-sm sm:text-base">
               Tem um print de venda ou depoimento para compartilhar? 
               Envie agora e inspire outros afiliados!
             </p>
           </div>
           <button 
             onClick={handleOpenUploadModal}
-            className="w-full md:w-auto bg-emerald-500 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-all duration-300 hover:scale-105"
+            className="w-full sm:w-auto bg-emerald-500 text-white px-4 py-2 sm:py-3 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-all duration-300 hover:scale-105 text-sm sm:text-base"
           >
-            <Upload className="mr-2" size={20} />
+            <Upload className="mr-2" size={18} />
             <span>Enviar Imagem</span>
           </button>
         </motion.div>
@@ -172,53 +175,102 @@ const AffiliateTestimonials: React.FC = () => {
         />
 
         {/* Galeria de Imagens */}
-        <motion.div 
-          className="grid grid-cols-3 lg:grid-cols-4 gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          {filteredImages.map((image) => (
-            <motion.div
-              key={image.id}
-              whileHover={{ scale: 1.05 }}
-              className="relative overflow-hidden rounded-lg shadow-md cursor-pointer group aspect-square"
+        {isLoading ? (
+          <div className="flex justify-center items-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          </div>
+        ) : filteredImages.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <div className="text-emerald-500 mb-4">
+              <Upload size={48} className="mx-auto" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhuma imagem encontrada</h3>
+            <p className="text-gray-500 mb-6">
+              {filter === 'all' 
+                ? 'Ainda não temos imagens aprovadas na galeria.' 
+                : `Não há ${filter === 'sale' ? 'prints de vendas' : 'depoimentos'} aprovados na galeria.`}
+            </p>
+            <button 
+              onClick={handleOpenUploadModal}
+              className="bg-emerald-500 text-white px-4 py-2 rounded-lg inline-flex items-center hover:bg-emerald-600 transition-all"
             >
-              <img 
-                src={image.url} 
-                alt="Depoimento" 
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              
-              {/* Overlay de ações */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                <div className="flex space-x-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Maximize2 
-                    className="text-white" 
-                    onClick={() => setSelectedImage(image)}
-                  />
-                  <Download 
-                    className="text-white" 
-                    onClick={() => handleDownload(image.url)}
-                  />
+              <Upload size={16} className="mr-2" />
+              Seja o primeiro a enviar
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {filteredImages.map((image) => (
+              <motion.div
+                key={image.id}
+                whileHover={{ scale: 1.02 }}
+                className="relative overflow-hidden rounded-lg shadow-md cursor-pointer group aspect-square bg-gray-900"
+              >
+                <img 
+                  src={image.image_url} 
+                  alt={image.name || "Depoimento"} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                
+                {/* Overlay de ações */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                  <div className="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      className="text-white p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
+                      onClick={() => setSelectedImage(image)}
+                    >
+                      <Maximize2 size={20} />
+                    </button>
+                    <button
+                      className="text-white p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(image.image_url);
+                      }}
+                    >
+                      <Download size={20} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              {/* Indicador de tipo */}
-              <div className={`
-                absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs text-white
-                ${image.type === 'sale' ? 'bg-emerald-500' : 'bg-blue-500'}
-              `}>
-                {image.type === 'sale' ? 'Venda' : 'Depoimento'}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+                
+                {/* Nome e produto */}
+                {(image.name || image.product) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent pt-8 pb-3 px-3">
+                    {image.name && (
+                      <p className="text-white text-sm font-medium truncate">{image.name}</p>
+                    )}
+                    {image.product && (
+                      <p className="text-white/90 text-xs truncate">{image.product}</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Indicador de tipo */}
+                <div className={`
+                  absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium text-white
+                  ${image.type === 'sale' ? 'bg-emerald-500/90' : 'bg-blue-500/90'}
+                `}>
+                  {image.type === 'sale' ? 'Venda' : 'Depoimento'}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         {/* Modal de Imagem Ampliada */}
         {selectedImage && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2 sm:p-4"
             onClick={() => setSelectedImage(null)}
           >
             <motion.div 
@@ -229,16 +281,36 @@ const AffiliateTestimonials: React.FC = () => {
             >
               <button 
                 onClick={() => setSelectedImage(null)}
-                className="absolute -top-10 right-0 text-white hover:text-gray-300"
+                className="absolute -top-8 sm:-top-10 right-0 text-white hover:text-gray-300 p-1"
               >
-                <X size={32} />
+                <X size={24} className="sm:w-8 sm:h-8" />
               </button>
 
-              <img 
-                src={selectedImage.url} 
-                alt="Imagem ampliada" 
-                className="w-full max-h-[90vh] object-contain"
-              />
+              <div className="relative bg-gray-900 rounded-lg overflow-hidden">
+                <img 
+                  src={selectedImage?.image_url} 
+                  alt={selectedImage?.name || "Depoimento"} 
+                  className="w-full max-h-[80vh] object-contain"
+                />
+                
+                {/* Info da imagem */}
+                {selectedImage && (selectedImage.name || selectedImage.product) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-3 sm:p-4">
+                    {selectedImage.name && (
+                      <p className="text-white font-medium text-sm sm:text-base">{selectedImage.name}</p>
+                    )}
+                    {selectedImage.product && (
+                      <p className="text-white/80 text-xs sm:text-sm mt-1">{selectedImage.product}</p>
+                    )}
+                    <div className={`
+                      inline-block mt-2 px-2 py-1 rounded-full text-xs text-white
+                      ${selectedImage.type === 'sale' ? 'bg-emerald-500' : 'bg-blue-500'}
+                    `}>
+                      {selectedImage.type === 'sale' ? 'Print de Venda' : 'Depoimento'}
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}

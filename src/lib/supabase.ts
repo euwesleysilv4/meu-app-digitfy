@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Configuração do cliente Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Definir as variáveis de URL e chave diretamente se não puder acessar via env
+const supabaseUrl = 'https://ghufctqxevwaszzpfkym.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodWZjdHF4ZXZ3YXN6enBma3ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxMjQyMTMsImV4cCI6MjA1NzcwMDIxM30.LPR4CrQKjF5fO0TC_cJl71jBJZcDQuxUgNFCvxxUwXg';
 
+// Verificar se as variáveis estão definidas
 if (!supabaseUrl || !supabaseKey) {
   console.error('Variáveis de ambiente do Supabase não configuradas corretamente');
   console.error('URL:', supabaseUrl ? 'Configurada' : 'Não configurada');
@@ -33,13 +35,14 @@ export const isAuthenticated = async () => {
 // Tipos para os usuários
 export type UserRole = 'user' | 'admin' | 'moderator';
 export type UserPlan = 'gratuito' | 'member' | 'pro' | 'elite';
-export type UserStatus = 'online' | 'offline';
+export type UserStatus = 'online' | 'offline' | 'away' | 'banned';
 
 export interface UserProfile {
   id: string;
   nome: string;
   email: string;
   avatar_url?: string;
+  cover_url?: string;
   data_criacao: string;
   data_modificacao: string;
   status: UserStatus;
@@ -488,38 +491,15 @@ export const profiles = {
     try {
       console.log('Supabase: Forçando atualização do plano do usuário', {userId, newPlan});
       
-      // Verificar se o usuário existe antes
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('plano')
-        .eq('id', userId)
-        .single();
-        
-      if (checkError) {
-        console.error('Supabase: Erro ao verificar usuário existente:', checkError);
-        throw checkError;
-      }
+      // Usar a nova função RPC simplificada para atualizar o plano
+      const { data, error } = await supabase.rpc('force_update_user_plan', {
+        user_id: userId,
+        new_plan: newPlan
+      });
       
-      if (!existingUser) {
-        throw new Error('Usuário não encontrado');
-      }
-      
-      console.log('Supabase: Plano atual do usuário:', existingUser.plano);
-      
-      // Atualizar diretamente o plano do usuário
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          plano: newPlan,
-          data_modificacao: new Date().toISOString(),
-        })
-        .eq('id', userId)
-        .select();
-        
       if (error) throw error;
       
-      console.log('Supabase: Plano atualizado com sucesso:', data?.[0]?.plano);
-      
+      console.log('Supabase: Plano atualizado com sucesso via RPC');
       return { data, success: true, error: null };
     } catch (error) {
       console.error('Supabase: Erro ao forçar atualização do plano:', error);
