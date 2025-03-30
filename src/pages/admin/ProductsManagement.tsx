@@ -35,7 +35,7 @@ const ProductsManagement: React.FC = () => {
   const [pendingProducts, setPendingProducts] = useState<PendingProduct[]>([]);
   const [approvedProducts, setApprovedProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentView, setCurrentView] = useState<'lista' | 'adicionarProduto'>('lista');
+  const [currentView, setCurrentView] = useState<'lista' | 'adicionarProduto' | 'editarProduto'>('lista');
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error' | 'info',
@@ -44,6 +44,7 @@ const ProductsManagement: React.FC = () => {
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [diagnosticData, setDiagnosticData] = useState<any>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
   // Verificar permissões de administrador
   useEffect(() => {
@@ -743,6 +744,13 @@ const ProductsManagement: React.FC = () => {
     );
   };
 
+  // Função para iniciar a edição de um produto
+  const handleEditProduct = (product: Product) => {
+    setProductToEdit(product);
+    setCurrentView('editarProduto');
+    window.scrollTo(0, 0);
+  };
+
   // Renderizar card de produto aprovado
   const renderApprovedProductCard = (product: Product & { id?: string }) => (
     <motion.div 
@@ -788,18 +796,26 @@ const ProductsManagement: React.FC = () => {
         </div>
       </div>
       
-      <div className="p-4 bg-gray-50 border-t border-gray-100 flex space-x-2">
+      <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-2">
         <button 
           onClick={() => window.open(product.image, '_blank')}
-          className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg flex items-center justify-center transition-colors"
+          className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg flex items-center justify-center transition-colors text-sm"
         >
           <Eye size={16} className="mr-1" />
           Ver Imagem
         </button>
         
         <button 
+          onClick={() => product.id && handleEditProduct({...product, id: product.id})}
+          className="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-lg flex items-center justify-center transition-colors text-sm"
+        >
+          <Edit size={16} className="mr-1" />
+          Editar
+        </button>
+        
+        <button 
           onClick={() => product.id && handleRemoveProduct(product.id)}
-          className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg flex items-center justify-center transition-colors"
+          className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg flex items-center justify-center transition-colors text-sm"
         >
           <Trash2 size={16} className="mr-1" />
           Remover
@@ -808,7 +824,7 @@ const ProductsManagement: React.FC = () => {
         {product.salesUrl && (
           <button 
             onClick={() => window.open(product.salesUrl, '_blank')}
-            className="flex-1 bg-teal-100 hover:bg-teal-200 text-teal-700 py-2 rounded-lg flex items-center justify-center transition-colors"
+            className="flex-1 bg-teal-100 hover:bg-teal-200 text-teal-700 py-2 rounded-lg flex items-center justify-center transition-colors text-sm"
           >
             <ExternalLink size={16} className="mr-1" />
             Ver Vendas
@@ -824,6 +840,250 @@ const ProductsManagement: React.FC = () => {
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
     </svg>
   );
+
+  // Adicionar o componente de formulário de edição de produto
+  const EditProductForm: React.FC = () => {
+    const [formData, setFormData] = useState({
+      ...productToEdit,
+      is_featured: productToEdit?.is_featured || false
+    });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value, type } = e.target;
+      const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
+      
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+    };
+
+    const handleBenefitChange = (index: number, value: string) => {
+      const benefits = [...(formData.benefits || [])];
+      benefits[index] = value;
+      setFormData({ ...formData, benefits });
+    };
+
+    const addBenefit = () => {
+      setFormData({
+        ...formData,
+        benefits: [...(formData.benefits || []), '']
+      });
+    };
+
+    const removeBenefit = (index: number) => {
+      const benefits = [...(formData.benefits || [])];
+      benefits.splice(index, 1);
+      setFormData({ ...formData, benefits });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+
+      try {
+        // Atualizar produto no banco de dados
+        const { data, error } = await supabase
+          .from('recommended_products')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            category: formData.category,
+            price: formData.price,
+            benefits: formData.benefits,
+            sales_url: formData.salesUrl,
+            is_featured: formData.is_featured
+          })
+          .eq('id', productToEdit?.id)
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        setStatusMessage({
+          type: 'success',
+          message: 'Produto atualizado com sucesso!'
+        });
+
+        // Voltar para a lista e atualizar os dados
+        setCurrentView('lista');
+        fetchProducts();
+      } catch (error: any) {
+        console.error('Erro ao atualizar produto:', error);
+        setStatusMessage({
+          type: 'error',
+          message: `Erro ao atualizar produto: ${error.message || 'Erro desconhecido'}`
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">Editar Produto</h2>
+            <button
+              onClick={() => setCurrentView('lista')}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Nome do Produto
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Descrição
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={4}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  Categoria
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 text-sm font-medium mb-2">
+                  Preço
+                </label>
+                <input
+                  type="text"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                URL da Página de Vendas
+              </label>
+              <input
+                type="url"
+                name="salesUrl"
+                value={formData.salesUrl || ''}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Benefícios
+              </label>
+              {formData.benefits && formData.benefits.map((benefit, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={benefit}
+                    onChange={(e) => handleBenefitChange(index, e.target.value)}
+                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Descreva um benefício"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeBenefit(index)}
+                    className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addBenefit}
+                className="mt-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors flex items-center"
+              >
+                <Plus size={16} className="mr-1" />
+                Adicionar Benefício
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="is_featured"
+                  checked={formData.is_featured}
+                  onChange={handleChange}
+                  className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <span className="ml-2 text-gray-700 text-sm font-medium">
+                  Destacar produto (exibir como produto em destaque)
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentView('lista')}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader className="animate-spin h-4 w-4 mr-1" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} className="mr-1" />
+                    Salvar Alterações
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
@@ -899,13 +1159,15 @@ const ProductsManagement: React.FC = () => {
             <div className="container mx-auto px-4 py-8 max-w-4xl">
               <AddProductForm 
                 onAddProduct={() => {
-                  fetchProducts();
                   setCurrentView('lista');
-                }} 
+                  fetchProducts();
+                }}
                 onCancel={() => setCurrentView('lista')}
                 setStatusMessage={setStatusMessage}
               />
             </div>
+          ) : currentView === 'editarProduto' && productToEdit ? (
+            <EditProductForm />
           ) : (
             <>
               <div className="container mx-auto px-4 py-6">

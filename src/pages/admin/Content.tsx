@@ -17,6 +17,8 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { userService } from '../../services/userService';
 import { supabase } from '../../lib/supabase';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 // Tipos de conteúdo que podem ser gerenciados
 interface RelevantContent {
@@ -499,15 +501,40 @@ const AdminContent: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo *</label>
-                <textarea 
-                  rows={15}
-                  value={currentItem.content}
-                  onChange={(e) => setCurrentItem({...currentItem, content: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="Insira o conteúdo completo aqui. Você pode usar markdown para formatação."
-                ></textarea>
+                <div className="border border-gray-300 rounded-lg">
+                  <ReactQuill 
+                    value={currentItem.content}
+                    onChange={(content) => setCurrentItem({...currentItem, content})}
+                    className="min-h-[300px]"
+                    theme="snow"
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        [{ 'align': [] }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link', 'image', 'video'],
+                        ['blockquote', 'code-block'],
+                        ['clean']
+                      ],
+                    }}
+                    formats={[
+                      'header',
+                      'bold', 'italic', 'underline', 'strike',
+                      'list', 'bullet',
+                      'indent',
+                      'align',
+                      'color', 'background',
+                      'link', 'image', 'video',
+                      'blockquote', 'code-block'
+                    ]}
+                    style={{ height: '350px' }}
+                  />
+                </div>
                 <p className="mt-1 text-xs text-gray-500">
-                  Suporta formatação em Markdown
+                  Editor de texto rico com suporte a formatação avançada
                 </p>
               </div>
             </div>

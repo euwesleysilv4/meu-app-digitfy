@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ChevronLeft, ChevronRight, PlayCircle, Clock, Star, ArrowRight, Sparkles, Zap, Award, FileText, X, Upload, Lock, Check, Download, Map, DollarSign, Package, Bookmark } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, PlayCircle, Clock, Star, ArrowRight, Sparkles, Zap, Award, FileText, X, Upload, Lock, Check, Download, Map, DollarSign, Package, Bookmark, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../services/permissionService';
@@ -14,10 +14,12 @@ interface Course {
   description: string;
   image: string;
   category: string;
-  lessons: number;
-  duration: string;
+  lessons?: number;
+  duration?: string;
   instructor: string;
   content?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Ebook {
@@ -276,8 +278,8 @@ const Learning = () => {
         description: course.description,
         image: course.image_url || 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=300&h=400',
         category: course.tags?.[0] || 'Marketing',
-        lessons: course.lessons_count || Math.floor(Math.random() * 10) + 5,
-        duration: course.duration || `${Math.floor(Math.random() * 5) + 1}h`,
+        created_at: course.created_at,
+        updated_at: course.updated_at,
         instructor: course.author || 'DigitFy'
       }));
       
@@ -458,6 +460,20 @@ const Learning = () => {
   
   const handleNavigateToCurso = () => {
     navigate('/dashboard/learning/course');
+  };
+
+  // Função para formatar data no formato brasileiro
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
   // Componente de Modal para Cursos
@@ -1064,18 +1080,9 @@ const Learning = () => {
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">{course.description}</p>
                     
                     <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <PlayCircle className="w-4 h-4 text-emerald-500" />
-                          <span>{course.lessons} aulas</span>
-                        </div>
-                        
-                        <span className="text-gray-300">•</span>
-                        
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-emerald-500" />
-                          <span>{course.duration}</span>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-emerald-500" />
+                        <span>Postado em {formatDate(course.updated_at || course.created_at || new Date().toISOString())}</span>
                       </div>
                       
                       <ArrowRight className="w-5 h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />

@@ -5,7 +5,6 @@ import { supabase } from "../lib/supabase";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { userService } from "../services/userService";
-import ReactMarkdown from "react-markdown";
 
 interface RelevantContent {
   id: string;
@@ -275,7 +274,7 @@ const FreeCourses = () => {
             </p>
           </div>
           
-          {/* Conteúdo Markdown com imagens clicáveis */}
+          {/* Conteúdo HTML com imagens clicáveis */}
           <div className="prose prose-emerald lg:prose-lg max-w-none 
             prose-headings:text-emerald-800 prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4
             prose-h1:text-3xl prose-h1:font-bold prose-h1:bg-gradient-to-r prose-h1:from-emerald-600 prose-h1:to-teal-500 prose-h1:bg-clip-text prose-h1:text-transparent
@@ -298,20 +297,22 @@ const FreeCourses = () => {
             prose-th:py-3 prose-th:px-4 prose-th:border prose-th:border-emerald-200 prose-th:text-left
             prose-td:py-2 prose-td:px-4 prose-td:border prose-td:border-emerald-200"
           >
-            <ReactMarkdown
-              components={{
-                img: ({ node, ...props }) => (
-                  <img 
-                    {...props} 
-                    onClick={() => setLightboxImage(props.src || '')}
-                    className="rounded-lg my-8 mx-auto shadow-md cursor-pointer transition-transform hover:scale-[1.02]"
-                    loading="lazy"
-                  />
-                ),
+            <div 
+              dangerouslySetInnerHTML={{ __html: selectedContent.content }} 
+              ref={(node) => {
+                // Adicionar evento de clique para todas as imagens após a renderização
+                if (node) {
+                  const images = node.querySelectorAll('img');
+                  images.forEach(img => {
+                    img.addEventListener('click', () => {
+                      setLightboxImage(img.src);
+                    });
+                    // Adicionar classes para manter o estilo existente
+                    img.classList.add('rounded-lg', 'my-8', 'mx-auto', 'shadow-md', 'cursor-pointer', 'transition-transform', 'hover:scale-[1.02]');
+                  });
+                }
               }}
-            >
-              {selectedContent.content}
-            </ReactMarkdown>
+            />
           </div>
         </div>
       </div>

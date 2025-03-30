@@ -75,13 +75,20 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- === PARTE 4: ADICIONAR GATILHO PARA MARCAR PRODUTOS DE USUÁRIOS ELITE COMO DESTAQUE ===
 CREATE OR REPLACE FUNCTION public.mark_elite_user_products_as_featured()
 RETURNS TRIGGER AS $$
+DECLARE
+    user_plan TEXT;
 BEGIN
-    -- Se estamos inserindo um produto na tabela recommended_products e o user_id está definido
-    IF (TG_OP = 'INSERT' AND NEW.user_id IS NOT NULL) THEN
-        -- Verifica se o usuário tem plano elite
-        IF public.user_has_elite_plan(NEW.user_id) THEN
-            -- Define o produto como destaque
+    -- Se estamos inserindo ou atualizando um produto na tabela recommended_products e o user_id está definido
+    IF (NEW.user_id IS NOT NULL) THEN
+        -- Obter diretamente o plano do usuário
+        SELECT plano INTO user_plan FROM public.profiles WHERE id = NEW.user_id;
+        
+        -- Se o usuário tiver plano elite, marcar produto como destaque
+        IF user_plan = 'elite' THEN
             NEW.is_featured := TRUE;
+            RAISE NOTICE 'Produto do usuário % com plano % marcado como featured', NEW.user_id, user_plan;
+        ELSE
+            RAISE NOTICE 'Usuário % tem plano % (não Elite)', NEW.user_id, user_plan;
         END IF;
     END IF;
     
@@ -89,12 +96,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Remover trigger existente, se houver
+-- Remover triggers existentes, se houver
 DROP TRIGGER IF EXISTS set_product_featured_status ON public.recommended_products;
 
--- Criar o trigger que é disparado antes da inserção
+-- Criar o trigger que é disparado antes da inserção e atualização
 CREATE TRIGGER set_product_featured_status
-BEFORE INSERT ON public.recommended_products
+BEFORE INSERT OR UPDATE ON public.recommended_products
 FOR EACH ROW
 EXECUTE FUNCTION public.mark_elite_user_products_as_featured();
 

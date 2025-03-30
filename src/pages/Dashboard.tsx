@@ -249,88 +249,81 @@ const Dashboard: React.FC = () => {
               <div className="relative z-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
                   {/* Órbita à esquerda - Melhorada para mobile */}
-                  <div className="md:w-1/2 flex justify-center">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.7 }}
-                      className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-[26rem] md:h-[26rem] lg:w-[30rem] lg:h-[30rem]"
-                    >
-                      <div className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden">
-                        {/* Linhas orbitais - primeira órbita */}
-                        <div className="absolute inset-0 w-full h-full border border-emerald-200/50 rounded-full"></div>
-                        
-                        {/* Linhas orbitais - segunda órbita */}
-                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto border border-emerald-200/50 rounded-full"></div>
-                        
-                        {/* Linhas orbitais - terceira órbita */}
-                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto border border-emerald-200/50 rounded-full"></div>
-                        
-                        <motion.div 
-                          animate={{ 
-                            scale: [1, 1.05, 1],
-                            rotate: [0, 5, 0, -5, 0],
-                          }}
-                          transition={{ 
-                            repeat: Infinity,
-                            duration: 6,
-                            ease: "easeInOut"
-                          }}
-                          className="bg-gradient-to-br from-emerald-400 to-emerald-500 backdrop-blur-xl w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full flex items-center justify-center"
-                        >
-                          <img 
-                            src="/novas%20logos/icon-logo-white-solo.png" 
-                            alt="DigitFy"
-                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain"
-                          />
-                        </motion.div>
-                        
-                        {/* Órbitas ao redor do ícone principal - Primeira linha orbital - Responsiva */}
-                        <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '30s' }}>
-                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center border border-emerald-100">
-                            <FileText size={16} className="text-emerald-500 md:hidden" />
-                            <FileText size={22} className="text-emerald-500 hidden md:block" />
+                  <div className="md:w-1/2 flex justify-center items-center">
+                    <div className="aspect-square w-full max-w-[280px] sm:max-w-[320px] md:max-w-[380px] lg:max-w-[480px]">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.7 }}
+                        className="relative w-full h-full"
+                      >
+                        <div className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden">
+                          {/* Linhas orbitais */}
+                          <div className="absolute inset-0 w-full h-full border border-emerald-200/50 rounded-full"></div>
+                          <div className="absolute inset-0 m-auto w-3/4 h-3/4 border border-emerald-200/50 rounded-full"></div>
+                          <div className="absolute inset-0 m-auto w-1/2 h-1/2 border border-emerald-200/50 rounded-full"></div>
+                          
+                          {/* Ícone central */}
+                          <motion.div 
+                            animate={{ 
+                              scale: [1, 1.05, 1],
+                              rotate: [0, 5, 0, -5, 0],
+                            }}
+                            transition={{ 
+                              repeat: Infinity,
+                              duration: 6,
+                              ease: "easeInOut"
+                            }}
+                            className="bg-gradient-to-br from-emerald-400 to-emerald-500 backdrop-blur-xl w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full flex items-center justify-center z-10"
+                          >
+                            <img 
+                              src="/novas%20logos/icon-logo-white-solo.png" 
+                              alt="DigitFy"
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-20 lg:h-20 object-contain"
+                            />
+                          </motion.div>
+                          
+                          {/* Primeira linha orbital */}
+                          <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '30s' }}>
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center border border-emerald-100">
+                              <FileText className="text-emerald-500 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
+                            </div>
+                          </div>
+                          
+                          <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>
+                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                              <Hash className="text-emerald-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                            </div>
+                          </div>
+                          
+                          {/* Segunda linha orbital */}
+                          <div className="absolute inset-0 m-auto w-3/4 h-3/4 animate-spin-slow" style={{ animationDuration: '25s' }}>
+                            <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                              <BarChart3 className="text-emerald-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                            </div>
+                          </div>
+                          
+                          <div className="absolute inset-0 m-auto w-3/4 h-3/4 animate-spin-slow" style={{ animationDuration: '18s', animationDirection: 'reverse' }}>
+                            <div className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                              <MessageSquare className="text-emerald-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                            </div>
+                          </div>
+                          
+                          {/* Terceira linha orbital */}
+                          <div className="absolute inset-0 m-auto w-1/2 h-1/2 animate-spin-slow hidden sm:block" style={{ animationDuration: '15s' }}>
+                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                              <BookOpen className="text-emerald-500 w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+                            </div>
+                          </div>
+                          
+                          <div className="absolute inset-0 m-auto w-1/2 h-1/2 animate-spin-slow hidden sm:block" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
+                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                              <Users className="text-emerald-500 w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>
-                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
-                            <Hash size={14} className="text-emerald-500 md:hidden" />
-                            <Hash size={20} className="text-emerald-500 hidden md:block" />
-                          </div>
-                        </div>
-                        
-                        {/* Segunda linha orbital - Responsiva */}
-                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto animate-spin-slow" style={{ animationDuration: '25s' }}>
-                          <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
-                            <BarChart3 size={14} className="text-emerald-500 md:hidden" />
-                            <BarChart3 size={20} className="text-emerald-500 hidden md:block" />
-                          </div>
-                        </div>
-                        
-                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto animate-spin-slow" style={{ animationDuration: '18s', animationDirection: 'reverse' }}>
-                          <div className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
-                            <MessageSquare size={14} className="text-emerald-500 md:hidden" />
-                            <MessageSquare size={20} className="text-emerald-500 hidden md:block" />
-                          </div>
-                        </div>
-                        
-                        {/* Terceira linha orbital - Responsiva para devices menores, esconde em tamanhos muito pequenos */}
-                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto animate-spin-slow hidden sm:block" style={{ animationDuration: '15s' }}>
-                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
-                            <BookOpen size={14} className="text-emerald-500 lg:hidden" />
-                            <BookOpen size={20} className="text-emerald-500 hidden lg:block" />
-                          </div>
-                        </div>
-                        
-                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto animate-spin-slow hidden sm:block" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
-                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
-                            <Users size={14} className="text-emerald-500 lg:hidden" />
-                            <Users size={20} className="text-emerald-500 hidden lg:block" />
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    </div>
                   </div>
                   
                   {/* Texto de boas-vindas à direita - centralizado no mobile */}

@@ -25,6 +25,7 @@ const RecommendedProducts = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadedFromDb, setLoadedFromDb] = useState<boolean>(false);
   
   // Carregar produtos aprovados do banco de dados
   useEffect(() => {
@@ -47,6 +48,7 @@ const RecommendedProducts = () => {
           console.log('Nenhum produto encontrado no banco de dados');
           setProducts([]);
           setFeaturedProducts([]);
+          setLoadedFromDb(true);
           setLoading(false);
           return;
         }
@@ -57,10 +59,21 @@ const RecommendedProducts = () => {
         const featuredData = allProducts.filter(p => p.is_featured === true);
         const regularProducts = allProducts.filter(p => p.is_featured !== true);
         
+        // Depuração: verificar se temos produtos de usuários Elite
+        const eliteProducts = allProducts.filter(p => {
+          if (!p.user_id) return false;
+          // Verificar se este produto pertence a um usuário Elite
+          return true; // Simplificado para depuração
+        });
+        
+        console.log('Produtos em destaque (featured):', featuredData.length);
+        console.log('Produtos de possíveis usuários Elite:', eliteProducts.length);
+        
         console.log('Produtos obtidos do banco:', {
           total: allProducts.length,
           regularCount: regularProducts.length,
-          featuredCount: featuredData.length
+          featuredCount: featuredData.length,
+          possibleEliteProducts: eliteProducts.length
         });
         
         // Se não houver produtos regulares mas houver featured, use alguns featured como regulares também
@@ -109,9 +122,11 @@ const RecommendedProducts = () => {
         
         setProducts(formattedRegular);
         setFeaturedProducts(formattedFeatured);
+        setLoadedFromDb(true);
       } catch (err: any) {
         console.error('Erro ao carregar produtos:', err);
         setError('Erro ao carregar produtos: ' + err.message);
+        setLoadedFromDb(true);
       } finally {
         setLoading(false);
       }
@@ -122,11 +137,11 @@ const RecommendedProducts = () => {
 
   // Se não houver produtos em destaque do banco, usar os estáticos como fallback
   useEffect(() => {
-    if (featuredProducts.length === 0 && !loading) {
-      // Usar os produtos em destaque originais como fallback
+    if (loadedFromDb && featuredProducts.length === 0 && !loading) {
+      console.log('Usando produtos de fallback porque não há produtos em destaque no banco');
       setFeaturedProducts(eliteFeaturedProducts);
     }
-  }, [featuredProducts, loading]);
+  }, [featuredProducts, loading, loadedFromDb]);
 
   // Featured products for carousel
   const featuredProductsForCarousel = useMemo(() => {
@@ -455,23 +470,24 @@ const RecommendedProducts = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div 
-        className="flex items-center space-x-2"
+        className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <ShoppingBag className="text-teal-600" size={32} />
-        <h1 className="text-4xl font-bold text-gray-900">Produtos Recomendados</h1>
+        <ShoppingBag className="text-teal-600 hidden sm:block" size={32} />
+        <ShoppingBag className="text-teal-600 sm:hidden mb-2 self-center" size={28} />
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 text-center sm:text-left">Produtos Recomendados</h1>
       </motion.div>
 
       <motion.div 
-        className="bg-teal-50/50 rounded-xl p-4 md:p-6 shadow-sm border border-teal-100 mb-8 mt-8"
+        className="bg-teal-50/50 rounded-xl p-4 md:p-6 shadow-sm border border-teal-100 mb-8 mt-4 sm:mt-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-teal-800 mb-2 mt-4">
+          <div className="text-center md:text-left">
+            <h2 className="text-xl font-semibold text-teal-800 mb-2">
               Produtos Selecionados para Você
             </h2>
             <p className="text-teal-600 text-sm md:text-base">
@@ -482,13 +498,15 @@ const RecommendedProducts = () => {
           </div>
           
           {canRecommendProducts && (
-            <button 
-              onClick={handleRecommendButtonClick}
-              className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all shadow-sm hover:shadow-md"
-            >
-              <PlusCircle size={18} />
-              <span>Recomendar seu Infoproduto</span>
-            </button>
+            <div className="flex justify-center md:justify-end">
+              <button 
+                onClick={handleRecommendButtonClick}
+                className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all shadow-sm hover:shadow-md text-sm sm:text-base"
+              >
+                <PlusCircle size={18} />
+                <span>Recomendar seu Infoproduto</span>
+              </button>
+            </div>
           )}
         </div>
       </motion.div>

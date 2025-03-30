@@ -5,7 +5,6 @@ import { supabase } from "../lib/supabase";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { userService } from "../services/userService";
-import ReactMarkdown from "react-markdown";
 
 interface RelevantContent {
   id: string;
@@ -254,9 +253,9 @@ const RelevantContentPage = () => {
             </p>
           </div>
           
-          {/* Conteúdo Markdown */}
+          {/* Conteúdo HTML */}
           <div className="prose prose-emerald max-w-none">
-            <ReactMarkdown>{selectedContent.content}</ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: selectedContent.content }} />
           </div>
         </div>
       </div>

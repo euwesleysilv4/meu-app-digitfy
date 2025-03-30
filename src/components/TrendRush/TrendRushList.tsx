@@ -61,7 +61,7 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
           .from('trend_rush')
           .select('*')
           .eq('status', 'published')
-          .order('priority', { ascending: true });
+          .order('created_at', { ascending: false });
 
         // Filtrar por plataforma se necessário
         if (platform !== 'all') {
@@ -75,27 +75,38 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
         }
         
         if (data) {
-          setTrendingAudios(data);
+          // Garante que os dados estão ordenados por data de criação (mais recente primeiro)
+          const sortedData = [...data].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setTrendingAudios(sortedData);
         }
       } catch (error) {
         console.error('Erro ao buscar áudios em tendência:', error);
         // Em caso de erro, usando dados simulados como fallback
-        const mockData: TrendRushItem[] = Array(5).fill(0).map((_, index) => ({
-          id: `audio-${index}`,
-          title: `Áudio Trending ${index + 1}`,
-          description: `Descrição do áudio ${index + 1}`,
-          audio_url: '#',
-          image_url: `https://picsum.photos/200/200?random=${index}`,
-          status: 'published',
-          platform: index % 2 === 0 ? 'instagram' : 'tiktok',
-          artist: `Artista ${Math.floor(index / 3) + 1}`,
-          tags: ['trending', 'viral'],
-          is_featured: index === 0,
-          view_count: Math.floor(Math.random() * 900000) + 100000,
-          priority: index + 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }));
+        const now = new Date();
+        const mockData: TrendRushItem[] = Array(5).fill(0).map((_, index) => {
+          // Cria datas com intervalos para simular diferentes momentos de criação
+          const date = new Date(now);
+          date.setDate(date.getDate() - index); // Cada item é um dia mais antigo
+          
+          return {
+            id: `audio-${index}`,
+            title: `Áudio Trending ${index + 1}`,
+            description: `Descrição do áudio ${index + 1}`,
+            audio_url: '#',
+            image_url: `https://picsum.photos/200/200?random=${index}`,
+            status: 'published',
+            platform: index % 2 === 0 ? 'instagram' : 'tiktok',
+            artist: `Artista ${Math.floor(index / 3) + 1}`,
+            tags: ['trending', 'viral'],
+            is_featured: index === 0,
+            view_count: Math.floor(Math.random() * 900000) + 100000,
+            priority: index + 1,
+            created_at: date.toISOString(),
+            updated_at: date.toISOString()
+          };
+        });
         setTrendingAudios(mockData);
       } finally {
         setLoading(false);
@@ -104,6 +115,16 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
 
     fetchTrendingAudios();
   }, [platform, initialData]);
+
+  // Se temos dados iniciais, garantir que estão ordenados
+  useEffect(() => {
+    if (initialData.length > 0) {
+      const sortedInitialData = [...initialData].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setTrendingAudios(sortedInitialData);
+    }
+  }, [initialData]);
 
   // Controlar reprodução do áudio
   useEffect(() => {

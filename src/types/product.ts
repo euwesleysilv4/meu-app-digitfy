@@ -17,4 +17,5 @@ export interface Product {
   url?: string;
   productUrl?: string;
   salesUrl?: string;
+  is_featured?: boolean;
 } 

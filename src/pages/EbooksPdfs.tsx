@@ -5,7 +5,6 @@ import { useLocation, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { userService } from "../services/userService";
-import ReactMarkdown from "react-markdown";
 
 interface Ebook {
   id: string;
@@ -308,6 +307,13 @@ const EbooksPdfs = () => {
               {selectedEbook.description}
             </p>
             
+            {/* Conteúdo */}
+            {selectedEbook.content && (
+              <div className="prose prose-emerald max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: selectedEbook.content }} />
+              </div>
+            )}
+            
             {/* Botão de Download */}
             <div className="my-8 flex justify-center">
               <a
@@ -322,34 +328,6 @@ const EbooksPdfs = () => {
               </a>
             </div>
           </div>
-          
-          {/* Conteúdo Markdown se existir */}
-          {selectedEbook.content && (
-            <div className="prose prose-emerald lg:prose-lg max-w-none 
-              prose-headings:text-emerald-800 prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4
-              prose-h1:text-3xl prose-h1:font-bold prose-h1:bg-gradient-to-r prose-h1:from-emerald-600 prose-h1:to-teal-500 prose-h1:bg-clip-text prose-h1:text-transparent
-              prose-h2:text-2xl prose-h2:border-b prose-h2:border-emerald-100 prose-h2:pb-2
-              prose-h3:text-xl 
-              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:my-5
-              prose-a:text-emerald-600 prose-a:font-medium prose-a:no-underline prose-a:border-b prose-a:border-emerald-300 hover:prose-a:border-emerald-500 hover:prose-a:text-emerald-700
-              prose-strong:text-emerald-700 prose-strong:font-semibold
-              prose-em:text-gray-600 prose-em:italic
-              prose-ul:my-6 prose-ul:list-disc prose-ul:pl-6
-              prose-ol:my-6 prose-ol:list-decimal prose-ol:pl-6
-              prose-li:my-2 prose-li:pl-2
-              prose-blockquote:border-l-4 prose-blockquote:border-emerald-300 prose-blockquote:pl-6 prose-blockquote:py-1 prose-blockquote:my-6 prose-blockquote:bg-emerald-50 prose-blockquote:rounded-r-lg prose-blockquote:pr-4 prose-blockquote:italic prose-blockquote:text-gray-700
-              prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:p-4 prose-pre:my-6
-              prose-code:text-emerald-700 prose-code:bg-emerald-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
-              prose-img:rounded-lg prose-img:my-8 prose-img:mx-auto prose-img:shadow-md
-              prose-hr:my-8 prose-hr:border-emerald-100
-              prose-table:border-collapse prose-table:w-full prose-table:my-6
-              prose-thead:bg-emerald-50 prose-thead:text-emerald-700
-              prose-th:py-3 prose-th:px-4 prose-th:border prose-th:border-emerald-200 prose-th:text-left
-              prose-td:py-2 prose-td:px-4 prose-td:border prose-td:border-emerald-200"
-            >
-              <ReactMarkdown>{selectedEbook.content}</ReactMarkdown>
-            </div>
-          )}
         </div>
       </div>
     );

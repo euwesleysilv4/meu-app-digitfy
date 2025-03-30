@@ -39,4 +39,21 @@ BEGIN
     ELSE
         RAISE NOTICE 'Nenhum administrador encontrado para atribuir plano Elite';
     END IF;
+END $$;
+
+-- Garantir que TODOS os produtos de usuários Elite sejam marcados como featured
+DO $$
+DECLARE
+    products_count INT;
+BEGIN
+    UPDATE public.recommended_products 
+    SET is_featured = TRUE
+    WHERE user_id IN (
+        SELECT id FROM public.profiles WHERE plano = 'elite'
+    )
+    AND (is_featured IS NULL OR is_featured = FALSE);
+    
+    GET DIAGNOSTICS products_count = ROW_COUNT;
+    
+    RAISE NOTICE 'Atualizados % produtos de usuários Elite para serem exibidos em destaque', products_count;
 END $$; 
