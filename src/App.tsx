@@ -434,7 +434,7 @@ function App() {
               <MindMaps />
             </FeatureGate>
           } />
-          <Route path="learning/sales-strategy" element={
+          <Route path="learning/sales-strategy/:id?" element={
             <FeatureGate featureKey="salesStrategy">
               <SalesStrategy />
             </FeatureGate>

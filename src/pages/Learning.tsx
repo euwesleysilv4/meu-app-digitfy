@@ -1023,7 +1023,7 @@ const Learning = () => {
         
         {/* Cursos Gratuitos */}
         <ContentSection 
-          title="Cursos Gratuitos" 
+          title="Conteúdos Gratuitos" 
           icon={<BookOpen className="w-5 h-5" />}
           viewMoreLink="/dashboard/learning/free-courses"
         >
@@ -1254,7 +1254,7 @@ const Learning = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * index, duration: 0.5 }}
-                  onClick={() => navigate('/dashboard/learning/sales-strategy')}
+                  onClick={() => navigate(`/dashboard/learning/sales-strategy/${strategy.id}`)}
                 >
                   <div className="relative">
                     <img 
@@ -1299,11 +1299,11 @@ const Learning = () => {
           viewMoreLink="/dashboard/learning/free-packs"
         >
           {loading.freePacks ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex justify-center items-center py-8 sm:py-12">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 border-3 sm:border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {(realFreePacks.length > 0 ? realFreePacks : previewFreePacks.map(pack => ({
                 id: pack.id,
                 title: pack.title,
@@ -1313,48 +1313,52 @@ const Learning = () => {
               } as FreePack))).map((pack: FreePack, index: number) => (
                 <motion.div
                   key={pack.id}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100"
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-100 h-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 * index, duration: 0.5 }}
                   onClick={() => navigate('/dashboard/learning/free-packs')}
                 >
-                  <div className="flex flex-col md:flex-row h-full">
-                    <div className="relative w-full md:w-2/5">
+                  <div className="flex flex-col sm:flex-row h-full">
+                    <div className="relative w-full sm:w-2/5 h-44 sm:h-auto">
                       <img 
                         src={pack.image_url} 
                         alt={pack.title} 
-                        className="w-full h-52 md:h-full object-cover"
+                        loading={index < 2 ? "eager" : "lazy"}
+                        width="300"
+                        height="200"
+                        decoding="async"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = "https://via.placeholder.com/800x600?text=Pacote";
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-r md:from-transparent md:to-white/10 from-black/50 to-black/30"></div>
-                      <div className="absolute top-4 left-4 md:hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r sm:from-transparent sm:to-white/10 from-black/50 to-black/30"></div>
+                      <div className="absolute top-4 left-4 sm:hidden">
                         <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
                           Pacote
                         </span>
                       </div>
                     </div>
                     
-                    <div className="p-5 flex flex-col justify-between md:w-3/5">
+                    <div className="p-4 sm:p-5 flex flex-col justify-between sm:w-3/5 flex-grow">
                       <div>
-                        <div className="hidden md:inline-block mb-3">
+                        <div className="hidden sm:inline-block mb-2 sm:mb-3">
                           <span className="bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-full font-medium">
                             Pacote
                           </span>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{pack.title}</h3>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{pack.description}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1 sm:mb-2 line-clamp-2">{pack.title}</h3>
+                        <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">{pack.description}</p>
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                      <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 mt-auto">
                         <div className="flex items-center gap-1">
-                          <Package className="w-4 h-4 text-emerald-500" />
+                          <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
                           <span>{pack.items_count || 0} itens</span>
                         </div>
                         
-                        <ArrowRight className="w-5 h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 transform group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
                   </div>

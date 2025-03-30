@@ -9,7 +9,7 @@ import {
   Zap, 
   Rocket, 
   BookOpenText, 
-  Users2, 
+  Users, 
   Wrench, 
   TrendingUp, 
   Bell, 
@@ -27,7 +27,8 @@ import {
   PlayCircle,
   ExternalLink,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -178,32 +179,59 @@ const Dashboard: React.FC = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-8 rounded-2xl overflow-hidden shadow-sm border border-emerald-100"
+                className="mb-8 rounded-2xl overflow-hidden shadow-sm border border-emerald-100 relative"
               >
-                <div className="relative banner-container" style={{ height: '250px' }}>
-                  {/* Imagem do banner para Desktop */}
+                {/* Link clicável sobre todo o banner */}
+                <a 
+                  href={banner.url_destino} 
+                  className="absolute inset-0 w-full h-full z-10"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={banner.titulo}
+                >
+                  <span className="sr-only">{banner.titulo}</span>
+                </a>
+                
+                {/* Imagem do banner para Desktop - altura adaptável */}
+                <div 
+                  className="hidden md:block"
+                  style={{ 
+                    backgroundColor: '#f3f4f6',
+                    textAlign: 'center'
+                  }}
+                >
                   <img 
                     src={banner.imagem_desktop} 
-                    alt={banner.titulo}
-                    className="hidden md:block absolute inset-0 w-full h-full object-cover"
+                    alt=""
+                    className="w-full"
+                    style={{ 
+                      maxWidth: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto'
+                    }}
                   />
-                  
-                  {/* Imagem do banner para Mobile */}
+                </div>
+                
+                {/* Imagem do banner para Mobile - altura adaptável */}
+                <div 
+                  className="md:hidden block"
+                  style={{ 
+                    backgroundColor: '#f3f4f6',
+                    textAlign: 'center'
+                  }}
+                >
                   <img 
                     src={banner.imagem_mobile} 
-                    alt={banner.titulo}
-                    className="md:hidden absolute inset-0 w-full h-full object-cover"
+                    alt=""
+                    className="w-full"
+                    style={{ 
+                      maxWidth: '100%',
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto'
+                    }}
                   />
-                  
-                  {/* Link clicável sobre o banner */}
-                  <a 
-                    href={banner.url_destino} 
-                    className="absolute inset-0 w-full h-full flex items-center justify-center"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span className="sr-only">{banner.titulo}</span>
-                  </a>
                 </div>
               </motion.div>
             )}
@@ -215,156 +243,190 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl shadow-sm p-8 text-emerald-800 relative overflow-hidden border border-emerald-100 mb-8"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/30 rounded-full -mt-12 -mr-12 z-0"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-100/30 rounded-full -mb-10 -ml-10 z-0"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/30 rounded-full -mt-12 -mr-12 z-0 blur-md"></div>
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-100/30 rounded-full -mb-10 -ml-10 z-0 blur-md"></div>
               
               <div className="relative z-10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
-                  <div>
-                    <div className="flex items-center mb-1">
+                  {/* Órbita à esquerda - Melhorada para mobile */}
+                  <div className="md:w-1/2 flex justify-center">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.7 }}
+                      className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-[26rem] md:h-[26rem] lg:w-[30rem] lg:h-[30rem]"
+                    >
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden">
+                        {/* Linhas orbitais - primeira órbita */}
+                        <div className="absolute inset-0 w-full h-full border border-emerald-200/50 rounded-full"></div>
+                        
+                        {/* Linhas orbitais - segunda órbita */}
+                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto border border-emerald-200/50 rounded-full"></div>
+                        
+                        {/* Linhas orbitais - terceira órbita */}
+                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto border border-emerald-200/50 rounded-full"></div>
+                        
+                        <motion.div 
+                          animate={{ 
+                            scale: [1, 1.05, 1],
+                            rotate: [0, 5, 0, -5, 0],
+                          }}
+                          transition={{ 
+                            repeat: Infinity,
+                            duration: 6,
+                            ease: "easeInOut"
+                          }}
+                          className="bg-gradient-to-br from-emerald-400 to-emerald-500 backdrop-blur-xl w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full flex items-center justify-center"
+                        >
+                          <img 
+                            src="/novas%20logos/icon-logo-white-solo.png" 
+                            alt="DigitFy"
+                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain"
+                          />
+                        </motion.div>
+                        
+                        {/* Órbitas ao redor do ícone principal - Primeira linha orbital - Responsiva */}
+                        <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '30s' }}>
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center border border-emerald-100">
+                            <FileText size={16} className="text-emerald-500 md:hidden" />
+                            <FileText size={22} className="text-emerald-500 hidden md:block" />
+                          </div>
+                        </div>
+                        
+                        <div className="absolute inset-0 w-full h-full animate-spin-slow" style={{ animationDuration: '20s', animationDirection: 'reverse' }}>
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                            <Hash size={14} className="text-emerald-500 md:hidden" />
+                            <Hash size={20} className="text-emerald-500 hidden md:block" />
+                          </div>
+                        </div>
+                        
+                        {/* Segunda linha orbital - Responsiva */}
+                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto animate-spin-slow" style={{ animationDuration: '25s' }}>
+                          <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                            <BarChart3 size={14} className="text-emerald-500 md:hidden" />
+                            <BarChart3 size={20} className="text-emerald-500 hidden md:block" />
+                          </div>
+                        </div>
+                        
+                        <div className="absolute inset-0 w-3/4 h-3/4 mx-auto my-auto animate-spin-slow" style={{ animationDuration: '18s', animationDirection: 'reverse' }}>
+                          <div className="absolute top-1/2 left-0 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                            <MessageSquare size={14} className="text-emerald-500 md:hidden" />
+                            <MessageSquare size={20} className="text-emerald-500 hidden md:block" />
+                          </div>
+                        </div>
+                        
+                        {/* Terceira linha orbital - Responsiva para devices menores, esconde em tamanhos muito pequenos */}
+                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto animate-spin-slow hidden sm:block" style={{ animationDuration: '15s' }}>
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                            <BookOpen size={14} className="text-emerald-500 lg:hidden" />
+                            <BookOpen size={20} className="text-emerald-500 hidden lg:block" />
+                          </div>
+                        </div>
+                        
+                        <div className="absolute inset-0 w-1/2 h-1/2 mx-auto my-auto animate-spin-slow hidden sm:block" style={{ animationDuration: '22s', animationDirection: 'reverse' }}>
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-white/95 w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center border border-emerald-100">
+                            <Users size={14} className="text-emerald-500 lg:hidden" />
+                            <Users size={20} className="text-emerald-500 hidden lg:block" />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                  
+                  {/* Texto de boas-vindas à direita - centralizado no mobile */}
+                  <div className="md:w-1/2 mt-6 md:mt-0 md:ml-4">
+                    <div className="flex items-center mb-4 justify-center md:justify-start">
                       <div className="bg-emerald-500 text-white p-2 rounded-lg shadow-md mr-3">
-                        <Zap size={24} className="text-white" />
+                        <img 
+                          src="/novas%20logos/icon-logo-white-solo.png" 
+                          alt="DigitFy"
+                          className="w-5 h-5 object-contain"
+                        />
                       </div>
                       <div>
-                        <h1 className="text-lg md:text-2xl font-bold">
+                        <h1 className="text-xl md:text-3xl font-bold">
                           {getGreeting()}, {profile?.nome || 'usuário'}!
                         </h1>
-                        <p className="text-sm text-emerald-700/80 mt-1 capitalize">
+                        <p className="text-base text-emerald-700/80 mt-1 capitalize">
                           {formatDate()}
                         </p>
-                      </div>
                     </div>
                   </div>
                   
-                  <div className="mt-4 md:mt-0">
-                    <div className={`bg-${planStatus.color}-100 border border-${planStatus.color}-200 text-${planStatus.color}-700 px-4 py-1 rounded-full text-sm font-medium flex items-center`}>
-                      <Crown size={16} className="mr-1" />
+                    <div className="mt-4 md:mt-0 mb-6 text-center md:text-left">
+                      <div className={`bg-${planStatus.color}-100 border border-${planStatus.color}-200 text-${planStatus.color}-700 px-4 py-1.5 rounded-full text-base font-medium inline-flex items-center`}>
+                      <Crown size={18} className="mr-2" />
                       Plano {planStatus.badge}
-                    </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-emerald-100/50">
-                  <p className="text-emerald-700">
+                    <div className="bg-white/60 backdrop-blur-sm p-5 px-8 rounded-xl border border-emerald-100/50 max-w-lg mx-auto md:mx-0">
+                  <p className="text-emerald-700 text-lg text-center md:text-left">
                     Seja bem-vindo ao seu painel de controle personalizado. Aqui você tem acesso a todas as ferramentas e recursos para alavancar seus resultados!
                   </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
             
-            {/* Informações do Perfil */}
+            {/* Seção Moderna Estilo SaaS - Apresentação DigitFy */}
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full mr-2"></div>
-                Seu Perfil
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
+                  transition={{ duration: 0.6 }}
+                  className="bg-gray-50 rounded-2xl overflow-hidden"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm font-medium">Notificações</p>
-                      <h3 className="text-lg font-bold text-gray-800 mt-1 capitalize">{profile?.notificacoes_ativas ? 'Ativas' : 'Desativadas'}</h3>
-                    </div>
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Bell className="h-6 w-6 text-emerald-600" />
-                    </div>
-                  </div>
-                  <div className="flex items-center mt-3 text-xs text-emerald-600">
-                    <span>Receba atualizações importantes</span>
-                  </div>
+                {/* Seção vazia - todo conteúdo foi removido */}
                 </motion.div>
-                
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm font-medium">Membro desde</p>
-                      <h3 className="text-lg font-bold text-gray-800 mt-1">
-                        {profile?.data_criacao 
-                          ? new Date(profile.data_criacao).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})
-                          : 'Jan 2024'}
-                      </h3>
-                    </div>
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Calendar className="h-6 w-6 text-emerald-600" />
-                    </div>
-                  </div>
-                  <div className="flex items-center mt-3 text-xs text-emerald-600">
-                    <span>Obrigado pela confiança!</span>
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm font-medium">Último Acesso</p>
-                      <h3 className="text-lg font-bold text-gray-800 mt-1">
-                        {profile?.ultimo_login 
-                          ? new Date(profile.ultimo_login).toLocaleDateString('pt-BR', {day: 'numeric', month: 'short'})
-                          : 'Hoje'}
-                      </h3>
-                    </div>
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Clock className="h-6 w-6 text-emerald-600" />
-                    </div>
-                  </div>
-                  <div className="flex items-center mt-3 text-xs text-emerald-600">
-                    <span>Atividade recente</span>
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.4 }}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-gray-500 text-sm font-medium">Seu Plano</p>
-                      <h3 className="text-lg font-bold text-gray-800 mt-1 capitalize">
-                        {profile?.plano || 'Gratuito'}
-                      </h3>
-                    </div>
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <Crown className="h-6 w-6 text-emerald-600" />
-                    </div>
-                  </div>
-                  <div className="flex items-center mt-3 text-xs text-emerald-600">
-                    <span>Acesso personalizado</span>
-                  </div>
-                </motion.div>
-              </div>
             </div>
-            
-            {/* Tutoriais em Vídeo */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full mr-2"></div>
-                Tutoriais em Vídeo
-              </h2>
+                
+            {/* Tutoriais em Vídeo - Com título centralizado mais moderno e animado */}
+            <div className="mb-12">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className="text-center mb-10"
+              >
+                <motion.h2 
+                  className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 relative"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    Acelere sua Jornada
+                  </span>
+                </motion.h2>
+                <motion.p 
+                  className="text-gray-600 max-w-2xl mx-auto text-lg mb-6"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                >
+                  Se você acabou de chegar na plataforma, estes vídeos vão te ajudar a extrair o
+                  <span className="text-emerald-600 font-semibold"> máximo de recursos</span> e 
+                  potencializar seus resultados.
+                </motion.p>
+              </motion.div>
               
-              <div className="space-y-12">
+              <div className="space-y-10">
+                {/* Introdução à DigitFy - sem cabeçalho */}
+                <div>
                 <TutorialVideosSection categoria="introducao" titulo="Introdução à DigitFy" />
+                </div>
                 
+                {/* Benefícios dos Planos Premium - sem cabeçalho */}
+                <div>
                 <TutorialVideosSection categoria="planos_premium" titulo="Benefícios dos Planos Premium" />
+                </div>
                 
+                {/* Ferramentas Avançadas - sem cabeçalho */}
+                <div>
                 <TutorialVideosSection categoria="ferramentas" titulo="Ferramentas Avançadas" />
+                </div>
               </div>
             </div>
           </div>
@@ -421,11 +483,13 @@ const TutorialVideosSection: React.FC<{ categoria: string; titulo: string }> = (
   
   if (loading) {
     return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {[1, 2, 3].map((i) => (
       <motion.div 
-        whileHover={{ scale: 1.02 }}
+            key={i}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: i * 0.1 }}
         className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
       >
         <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
@@ -439,79 +503,40 @@ const TutorialVideosSection: React.FC<{ categoria: string; titulo: string }> = (
           <div className="h-10 bg-gray-200 rounded animate-pulse w-full"></div>
         </div>
       </motion.div>
+        ))}
+      </div>
     );
   }
   
   if (error) {
     return (
-      <motion.div 
-        whileHover={{ scale: 1.02 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
-      >
-        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-          <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
-            <AlertCircle size={48} className="text-red-300" />
-          </div>
+      <div className="bg-white rounded-xl border border-red-100 p-5 text-center">
+        <AlertCircle size={36} className="text-red-400 mx-auto mb-3" />
+        <h3 className="font-semibold text-gray-800 mb-1">Erro ao carregar vídeos</h3>
+        <p className="text-gray-600 text-sm">Não foi possível carregar os vídeos neste momento. Tente novamente mais tarde.</p>
         </div>
-        <div className="p-4 flex-grow">
-          <h3 className="font-semibold text-gray-800 mb-1">{titulo}</h3>
-          <p className="text-gray-600 text-sm mb-3">Erro ao carregar o vídeo</p>
-        </div>
-        <div className="p-4 border-t border-gray-100 mt-auto">
-          <button
-            disabled
-            className="w-full flex items-center justify-center bg-gray-400 text-white py-2 px-4 rounded-lg text-sm font-medium cursor-not-allowed"
-          >
-            Indisponível
-          </button>
-        </div>
-      </motion.div>
     );
   }
   
   if (videos.length === 0) {
     return (
-      <motion.div 
-        whileHover={{ scale: 1.02 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
-      >
-        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-            <PlayCircle size={48} className="text-gray-300" />
-          </div>
+      <div className="bg-white rounded-xl border border-gray-100 p-6 text-center">
+        <PlayCircle size={36} className="text-emerald-300 mx-auto mb-3" />
+        <h3 className="font-semibold text-gray-800 mb-1">Conteúdo em desenvolvimento</h3>
+        <p className="text-gray-600 text-sm">Em breve novos vídeos sobre {titulo.toLowerCase()} serão disponibilizados.</p>
         </div>
-        <div className="p-4 flex-grow">
-          <h3 className="font-semibold text-gray-800 mb-1">{titulo}</h3>
-          <p className="text-gray-600 text-sm mb-3">Em breve novos vídeos sobre este tema</p>
-        </div>
-        <div className="p-4 border-t border-gray-100 mt-auto">
-          <button
-            disabled
-            className="w-full flex items-center justify-center bg-gray-400 text-white py-2 px-4 rounded-lg text-sm font-medium cursor-not-allowed"
-          >
-            Em breve
-          </button>
-        </div>
-      </motion.div>
     );
   }
   
   return (
-    <div className="col-span-1 lg:col-span-3">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {videos.map((video) => (
+      {videos.map((video, index) => (
           <motion.div 
             key={video.id}
-            whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, delay: index * 0.1 }}
             className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
           >
             <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
@@ -524,35 +549,35 @@ const TutorialVideosSection: React.FC<{ categoria: string; titulo: string }> = (
                   (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`;
                 }}
               />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <a 
                   href={`https://www.youtube.com/watch?v=${video.youtube_id}`}
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer"
+                className="bg-emerald-500/90 text-white rounded-full p-3 shadow-lg hover:bg-emerald-600 hover:scale-110 transition-all transform duration-200 cursor-pointer"
                 >
-                  <PlayCircle size={36} />
+                <PlayCircle size={40} />
                 </a>
               </div>
             </div>
             <div className="p-4 flex-grow">
-              <h3 className="font-semibold text-gray-800 mb-1">{video.titulo}</h3>
-              <p className="text-gray-600 text-sm mb-3">{video.descricao}</p>
+            <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 text-lg">{video.titulo}</h3>
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{video.descricao}</p>
             </div>
             <div className="p-4 border-t border-gray-100 mt-auto">
               <a 
                 href={`https://www.youtube.com/watch?v=${video.youtube_id}`} 
                 target="_blank"
                 rel="noopener noreferrer" 
-                className="w-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 px-4 rounded-lg flex items-center justify-center transition-all text-sm font-medium"
               >
-                Assistir no YouTube
-                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              Assistir Vídeo
+              <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </div>
           </motion.div>
         ))}
-      </div>
     </div>
   );
 };

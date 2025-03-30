@@ -94,8 +94,8 @@ const Home: React.FC = () => {
     const features = [
       {
         icon: BookOpenText,
-        title: "Cursos Gratuitos",
-        description: "Aprenda com dezenas de cursos sobre marketing digital, tráfego e vendas"
+        title: "Conteúdos Gratuitos",
+        description: "Aprenda com dezenas de conteúdos sobre marketing digital, tráfego e vendas"
       },
       {
         icon: Rocket,
@@ -156,7 +156,7 @@ const Home: React.FC = () => {
 
     // Benefícios listados
     const benefits = [
-      "Cursos atualizados semanalmente",
+      "Conteúdos atualizados semanalmente",
       "Ferramentas exclusivas",
       "Templates prontos para usar",
       "Networking qualificado"

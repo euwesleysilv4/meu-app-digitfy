@@ -301,7 +301,7 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
               />
               {activeDropdown === 'learning' && (
                 <div className="pl-8 mt-1 space-y-1">
-                  <SubMenuItem to="/learning/free-courses" label="Cursos Gratuitos" disabled={!session} />
+                  <SubMenuItem to="/learning/free-courses" label="Conteúdos Gratuitos" disabled={!session} />
                   <SubMenuItem to="/learning/ebooks" label="E-books e PDFs" disabled={!session} />
                   <SubMenuItem to="/learning/mind-maps" label="Mapas Mentais" disabled={!session} />
                   <SubMenuItem to="/learning/sales-strategy" label="Estratégia de Vendas" disabled={!session} />

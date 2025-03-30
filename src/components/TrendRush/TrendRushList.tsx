@@ -319,18 +319,29 @@ const TrendRushList: React.FC<TrendRushListProps> = ({
                     onClick={() => togglePlay(audio)}
                   >
                     <img 
-                      src={audio.image_url || `https://placehold.co/400x400/${index % 2 === 0 ? '22C55E' : '8B5CF6'}/FFFFFF?text=${index+1}`} 
+                      src={audio.image_url || (audio.platform === 'instagram' 
+                        ? 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%2322C55E"/%3E%3C/svg%3E'
+                        : 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%238B5CF6"/%3E%3C/svg%3E')}
                       alt={audio.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/10 to-black/30">
+                      {audio.platform === 'instagram' ? (
+                        <Instagram size={40} strokeWidth={2} className="text-white drop-shadow-lg" />
+                      ) : audio.platform === 'tiktok' ? (
+                        <Music size={40} strokeWidth={2} className="text-white drop-shadow-lg" />
+                      ) : (
+                        <Music size={40} strokeWidth={2} className="text-white drop-shadow-lg" />
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                       {currentAudio === audio.id && isPlaying ? (
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <rect x="6" y="5" width="4" height="14" rx="1" fill="white" />
                           <rect x="14" y="5" width="4" height="14" rx="1" fill="white" />
                         </svg>
                       ) : (
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M8 5V19L19 12L8 5Z" fill="white" />
                         </svg>
                       )}

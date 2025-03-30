@@ -86,7 +86,7 @@ export const featureNames: Record<FeatureKey, string> = {
   promoteCommunity: 'Promoção na Comunidade',
   telegramChannels: 'Canais no Telegram',
   // Aprendizado
-  freeCourses: 'Cursos Gratuitos',
+  freeCourses: 'Conteúdos Gratuitos',
   relevantContent: 'Conteúdos Relevantes',
   ebooks: 'E-books e PDFs',
   mindMaps: 'Mapas Mentais',
@@ -132,17 +132,17 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     // Ferramentas - Tudo liberado conforme solicitado
     whatsappGenerator: true,
     socialProofGenerator: true,
-    profileStructureGenerator: true,
+    profileStructureGenerator: false,
     hashtagGenerator: true,
-    persuasiveCopyGenerator: true,
+    persuasiveCopyGenerator: false,
     customCreatives: true,
     ltvFunnel: true,
     usefulSites: true,
-    notificationSimulator: true,
+    notificationSimulator: false,
     platformComparison: true,
     trendRush: true,
     digitalGames: true,
-    storytellingGenerator: true,
+    storytellingGenerator: false,
     orderBumpGenerator: true,
     // Comunidade - Tudo liberado exceto promoção
     whatsappGroups: true,
@@ -380,7 +380,7 @@ export const downloadLimits: Record<UserPlan, number> = {
 
 // Definição do limite de áudios do Trend Rush para cada plano
 export const trendRushLimits: Record<UserPlan, number> = {
-  gratuito: 5,      // Corrigido: 5 áudios por dia para plano gratuito
+  gratuito: 3,      // Atualizado: 3 áudios por dia para plano gratuito (antes era 5)
   member: 10,       // 10 áudios por dia para plano member
   pro: 15,          // Atualizado: 15 áudios por dia para plano pro (antes era 50)
   elite: Infinity   // Ilimitado para plano elite
@@ -391,7 +391,7 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
   // Ferramentas
   whatsappGenerator: 'gratuito',
   socialProofGenerator: 'member',
-  profileStructureGenerator: 'gratuito',
+  profileStructureGenerator: 'member',
   hashtagGenerator: 'gratuito',
   persuasiveCopyGenerator: 'member',
   customCreatives: 'pro',
@@ -401,7 +401,7 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
   platformComparison: 'member',
   trendRush: 'member',
   digitalGames: 'member',
-  storytellingGenerator: 'gratuito',
+  storytellingGenerator: 'member',
   orderBumpGenerator: 'gratuito',
   // Comunidade
   whatsappGroups: 'gratuito',
@@ -414,7 +414,7 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
   ebooks: 'member',
   mindMaps: 'member',
   salesStrategy: 'member',
-  profileStructure: 'gratuito',
+  profileStructure: 'member',
   freePacks: 'gratuito',
   learningChallenges: 'pro',
   submitLearningContent: 'pro',
@@ -451,20 +451,20 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
 // Mensagens de upgrade para cada recurso
 export const upgradeMessages: Record<FeatureKey, string> = {
   // Ferramentas
-  whatsappGenerator: 'Este recurso já está disponível no seu plano atual.',
-  socialProofGenerator: 'Este recurso já está disponível no seu plano Member.',
-  profileStructureGenerator: 'Este recurso já está disponível no seu plano atual.',
-  hashtagGenerator: 'Este recurso já está disponível no seu plano atual.',
-  persuasiveCopyGenerator: 'Este recurso já está disponível no seu plano Member.',
-  customCreatives: 'Atualize para o plano Pro para acessar criativos personalizados.',
-  ltvFunnel: 'Este recurso já está disponível no seu plano atual.',
-  usefulSites: 'Este recurso já está disponível no seu plano atual.',
-  notificationSimulator: 'Este recurso já está disponível no seu plano Member.',
-  platformComparison: 'Este recurso já está disponível no seu plano Member.',
-  trendRush: 'Este recurso já está disponível no seu plano Member. Limite diário: 15 áudios.',
-  digitalGames: 'Este recurso já está disponível no seu plano Member.',
-  storytellingGenerator: 'Este recurso já está disponível no seu plano atual.',
-  orderBumpGenerator: 'Este recurso já está disponível no seu plano atual.',
+  whatsappGenerator: 'Atualize para o plano Member para gerar mais links de WhatsApp.',
+  socialProofGenerator: 'Atualize para o plano Member para acessar o Gerador de Prova Social.',
+  profileStructureGenerator: 'Atualize para o plano Member para acessar o Gerador de Estrutura de Perfil.',
+  hashtagGenerator: 'Atualize para o plano Member para gerar hashtags ilimitadas.',
+  persuasiveCopyGenerator: 'Atualize para o plano Member para acessar o Gerador de Copy Persuasiva.',
+  customCreatives: 'Atualize para o plano Pro para acessar o Gerador de Criativos Personalizados.',
+  ltvFunnel: 'Atualize para o plano Member para acessar o Funil LTV.',
+  usefulSites: 'Atualize para o plano Member para acessar a lista de sites úteis.',
+  notificationSimulator: 'Atualize para o plano Member para acessar o Simulador de Notificações.',
+  platformComparison: 'Atualize para o plano Member para acessar o Comparador de Plataformas.',
+  trendRush: 'Atualize para o plano Member para acessar o Trend Rush.',
+  digitalGames: 'Atualize para o plano Member para acessar os Jogos Digitais.',
+  storytellingGenerator: 'Atualize para o plano Member para acessar o Gerador de Storytelling.',
+  orderBumpGenerator: 'Atualize para o plano Member para acessar o Gerador de Order Bump.',
   // Comunidade
   whatsappGroups: 'Este recurso já está disponível no seu plano atual.',
   discordServers: 'Este recurso já está disponível no seu plano Member.',
@@ -534,6 +534,20 @@ export const usePermissions = () => {
     return featurePermissions[userPlan][featureKey];
   };
 
+  // Verificar se o usuário tem um plano mínimo necessário
+  const hasMinimumPlan = (requiredPlan: UserPlan): boolean => {
+    // Admin tem acesso a tudo
+    if (profile?.role === 'admin') {
+      return true;
+    }
+    
+    const planOrder: UserPlan[] = ['gratuito', 'member', 'pro', 'elite'];
+    const currentPlanIndex = planOrder.indexOf(userPlan);
+    const requiredPlanIndex = planOrder.indexOf(requiredPlan);
+    
+    return currentPlanIndex >= requiredPlanIndex;
+  };
+
   // Obter todas as funcionalidades disponíveis para o plano atual
   const getAvailableFeatures = (): FeatureKey[] => {
     if (!profile) {
@@ -594,7 +608,7 @@ export const usePermissions = () => {
         return `Para acessar criativos personalizados, faça upgrade para o plano Pro ou Elite.`;
       case 'trendRush':
         if (userPlan === 'gratuito') {
-          return `No plano gratuito você tem acesso a apenas 5 áudios por dia. Faça upgrade para ver mais!`;
+          return `No plano gratuito você tem acesso a apenas 3 áudios por dia. Faça upgrade para ver mais!`;
         } else if (userPlan === 'member') {
           return `No plano Member você tem acesso a 10 áudios por dia. Faça upgrade para o plano Pro e tenha acesso a 15 áudios por dia!`;
         } else if (userPlan === 'pro') {
@@ -622,6 +636,7 @@ export const usePermissions = () => {
     hasFeaturedProducts,
     hasFeaturedServices,
     getUpgradeMessage,
+    hasMinimumPlan,
     userPlan
   };
 };

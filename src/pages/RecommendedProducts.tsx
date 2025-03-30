@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Star, ArrowRight, Check, PlusCircle, ChevronLeft, ChevronRight, X, ExternalLink, Loader, Image } from 'lucide-react';
+import { ShoppingBag, Star, ArrowRight, Check, PlusCircle, ChevronLeft, ChevronRight, X, ExternalLink, Loader, Image, LockKeyhole, Zap } from 'lucide-react';
 import { usePermissions } from '../services/permissionService';
 import { useNavigate } from 'react-router-dom';
 import RecommendationForm from '../components/RecommendationForm';
@@ -10,13 +10,15 @@ import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
 const RecommendedProducts = () => {
-  const { hasAccess, userPlan } = usePermissions();
+  const { hasAccess, userPlan, hasMinimumPlan } = usePermissions();
   const navigate = useNavigate();
   const canRecommendProducts = hasAccess('recommendedSection');
+  const canSubmitProducts = hasMinimumPlan('pro');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showRecommendationForm, setShowRecommendationForm] = useState(false);
+  const [showProFeatureModal, setShowProFeatureModal] = useState(false);
   
   // Estados para gerenciar produtos do banco de dados
   const [products, setProducts] = useState<Product[]>([]);
@@ -439,6 +441,17 @@ const RecommendedProducts = () => {
     toast(product.description || 'Sem descrição disponível');
   };
 
+  // Função para lidar com o clique no botão de recomendação
+  const handleRecommendButtonClick = () => {
+    if (canSubmitProducts) {
+      // Se o usuário tem plano Pro ou superior, abre o formulário normalmente
+      setShowRecommendationForm(true);
+    } else {
+      // Se o usuário tem plano Gratuito ou Member, mostra o modal de bloqueio
+      setShowProFeatureModal(true);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div 
@@ -457,20 +470,20 @@ const RecommendedProducts = () => {
         transition={{ delay: 0.2 }}
       >
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div>
+          <div>
             <h2 className="text-xl font-semibold text-teal-800 mb-2 mt-4">
-            Produtos Selecionados para Você
-          </h2>
+              Produtos Selecionados para Você
+            </h2>
             <p className="text-teal-600 text-sm md:text-base">
-            Aqui você encontra uma seleção exclusiva de ferramentas e produtos digitais 
-            que podem impulsionar seu negócio. Todos os produtos são cuidadosamente 
-            avaliados por nossa equipe para garantir a melhor qualidade.
-          </p>
+              Aqui você encontra uma seleção exclusiva de ferramentas e produtos digitais 
+              que podem impulsionar seu negócio. Todos os produtos são cuidadosamente 
+              avaliados por nossa equipe para garantir a melhor qualidade.
+            </p>
           </div>
           
           {canRecommendProducts && (
             <button 
-              onClick={() => setShowRecommendationForm(true)}
+              onClick={handleRecommendButtonClick}
               className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all shadow-sm hover:shadow-md"
             >
               <PlusCircle size={18} />
@@ -506,7 +519,7 @@ const RecommendedProducts = () => {
             <p className="text-sm">Não há produtos aprovados disponíveis para exibição no momento.</p>
             {canRecommendProducts && (
               <button 
-                onClick={() => setShowRecommendationForm(true)}
+                onClick={handleRecommendButtonClick}
                 className="mt-4 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 mx-auto"
               >
                 <PlusCircle size={16} />
@@ -819,6 +832,67 @@ const RecommendedProducts = () => {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal para informar que é necessário o plano Pro ou superior */}
+      <AnimatePresence>
+        {showProFeatureModal && (
+          <>
+            {/* Overlay escuro */}
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 0.6 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black z-[9999]"
+              onClick={() => setShowProFeatureModal(false)}
+            />
+            
+            {/* Modal de bloqueio */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", bounce: 0.25 }}
+              className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-md w-full">
+                {/* Faixa decorativa no topo */}
+                <div className="h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                
+                <div className="p-6">
+                  {/* Ícone do cadeado */}
+                  <div className="mx-auto w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                    <LockKeyhole size={30} className="text-white" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-gray-800 text-center mb-2">
+                    Funcionalidade Premium
+                  </h3>
+                  
+                  <p className="text-gray-600 text-center mb-6">
+                    O recurso para recomendar infoprodutos está disponível apenas para usuários dos planos Pro e Elite. Faça upgrade para desbloquear esta e outras funcionalidades exclusivas.
+                  </p>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => navigate('/dashboard/upgrade')}
+                      className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <Zap size={18} className="animate-pulse" />
+                      Fazer Upgrade
+                    </button>
+                    <button
+                      onClick={() => setShowProFeatureModal(false)}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg transition-all"
+                    >
+                      Voltar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

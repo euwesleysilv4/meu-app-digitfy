@@ -597,7 +597,7 @@ const AdminSalesStrategies: React.FC = () => {
                               <Edit className="h-5 w-5" />
                             </button>
                             <a 
-                              href={`/estrategias-vendas/${item.id}`} 
+                              href={`/dashboard/learning/sales-strategy/${item.id}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-emerald-600 hover:text-emerald-900"

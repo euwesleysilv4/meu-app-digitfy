@@ -201,8 +201,8 @@ const UpgradePlans: React.FC = () => {
       features: [
         { included: true, text: 'Acesso Gratuito a toda a DigitFy.' },
         { included: true, text: 'Downloads e Conteúdos Ilimitados.' },
-        { included: true, text: 'Ferramentas Disponíveis' },
-        { included: true, text: 'Trend Rush (Limitado a 05 Usos)' },
+        { included: true, text: '07 Ferramentas Disponíveis' },
+        { included: true, text: 'Trend Rush (Limitado a 03 Usos)' },
         { included: true, text: 'Profissionais Disponíveis.' },
         { included: true, text: 'Central de Ajuda Padrão.' },
         { included: true, text: '50% de Indique e Ganhe.' },
@@ -224,7 +224,8 @@ const UpgradePlans: React.FC = () => {
       features: [
         { included: true, text: 'Todos os Benefícios do Plano Gratuito' },
         { included: true, text: 'Trend Rush (Limitado a 10 Usos por dia)' },
-        { included: true, text: 'Envie dados para Área de Afiliados (Top Afiliados, Mais Vendidos, Mais Afiliados, Mais Completos)' },
+        { included: true, text: 'Envie dados para Área de Afiliados' },
+        { included: true, text: 'Todas as Ferramentas Disponíveis' },
         { included: true, text: 'Divulgue sua Comunidade' },
         { included: true, text: 'Destaque-se em conteúdos na Página de Aprendizado' },
         { included: true, text: '60% de Indique e Ganhe' },
@@ -334,6 +335,87 @@ const UpgradePlans: React.FC = () => {
           <p className="text-lg text-gray-600 max-w-3xl mx-auto px-4">
             Descubra recursos exclusivos que impulsionarão sua presença digital. Selecione o plano que melhor atende às suas necessidades.
           </p>
+        </motion.div>
+
+        {/* Seletor de Período - Movido para antes dos cards */}
+        <motion.div 
+          className="mb-10 max-w-md mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-1.5 overflow-hidden">
+            <div className="relative bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-1 flex">
+              {/* Indicador de seleção animado */}
+              <motion.div 
+                className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-md shadow-sm z-0"
+                initial={false}
+                animate={{ 
+                  width: '33.333%', 
+                  x: selectedPeriod === 'monthly' ? '0%' : 
+                     selectedPeriod === 'quarterly' ? '100%' : '200%'
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+              
+              {/* Botões */}
+              <button 
+                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                  selectedPeriod === 'monthly' 
+                    ? 'text-white font-medium' 
+                    : 'text-gray-600 hover:text-emerald-700'
+                }`}
+                onClick={() => setSelectedPeriod('monthly')}
+              >
+                Mensal
+              </button>
+              <button 
+                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                  selectedPeriod === 'quarterly' 
+                    ? 'text-white font-medium' 
+                    : 'text-gray-600 hover:text-emerald-700'
+                }`}
+                onClick={() => setSelectedPeriod('quarterly')}
+              >
+                Trimestral
+                <span className={`text-xs font-bold ml-1 ${
+                  selectedPeriod === 'quarterly' ? 'text-white' : 'text-emerald-500'
+                }`}>
+                  -30%
+                </span>
+              </button>
+              <button 
+                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
+                  selectedPeriod === 'yearly' 
+                    ? 'text-white font-medium' 
+                    : 'text-gray-600 hover:text-emerald-700'
+                }`}
+                onClick={() => setSelectedPeriod('yearly')}
+              >
+                Anual
+                <span className={`text-xs font-bold ml-1 ${
+                  selectedPeriod === 'yearly' ? 'text-white' : 'text-emerald-500'
+                }`}>
+                  -60%
+                </span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Mensagem informativa */}
+          <div className="text-center mt-3">
+            <motion.p 
+              key={selectedPeriod} // Força a animação quando o período muda
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-xs text-gray-600 bg-gradient-to-r from-emerald-50 to-teal-50 inline-block px-3 py-1.5 rounded-full border border-emerald-100"
+            >
+              {selectedPeriod === 'yearly' && '🎉 Economize 60% com o plano anual - melhor custo-benefício!'}
+              {selectedPeriod === 'quarterly' && '💰 Economize 30% com o plano trimestral.'}
+              {selectedPeriod === 'monthly' && '✓ Pagamento mensal sem compromisso de longo prazo.'}
+            </motion.p>
+          </div>
         </motion.div>
 
         {/* Cards de Planos */}
@@ -585,87 +667,6 @@ const UpgradePlans: React.FC = () => {
             ))}
           </div>
         )}
-
-        {/* Seletor de Período */}
-        <motion.div 
-          className="mt-12 mb-10 max-w-md mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-1.5 overflow-hidden">
-            <div className="relative bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-1 flex">
-              {/* Indicador de seleção animado */}
-              <motion.div 
-                className="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-md shadow-sm z-0"
-                initial={false}
-                animate={{ 
-                  width: '33.333%', 
-                  x: selectedPeriod === 'monthly' ? '0%' : 
-                     selectedPeriod === 'quarterly' ? '100%' : '200%'
-                }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              />
-              
-              {/* Botões */}
-              <button 
-                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
-                  selectedPeriod === 'monthly' 
-                    ? 'text-white font-medium' 
-                    : 'text-gray-600 hover:text-emerald-700'
-                }`}
-                onClick={() => setSelectedPeriod('monthly')}
-              >
-                Mensal
-              </button>
-              <button 
-                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
-                  selectedPeriod === 'quarterly' 
-                    ? 'text-white font-medium' 
-                    : 'text-gray-600 hover:text-emerald-700'
-                }`}
-                onClick={() => setSelectedPeriod('quarterly')}
-              >
-                Trimestral
-                <span className={`text-xs font-bold ml-1 ${
-                  selectedPeriod === 'quarterly' ? 'text-white' : 'text-emerald-500'
-                }`}>
-                  -30%
-                </span>
-              </button>
-              <button 
-                className={`flex-1 py-2.5 px-3 text-sm rounded-md transition-all relative z-10 ${
-                  selectedPeriod === 'yearly' 
-                    ? 'text-white font-medium' 
-                    : 'text-gray-600 hover:text-emerald-700'
-                }`}
-                onClick={() => setSelectedPeriod('yearly')}
-              >
-                Anual
-                <span className={`text-xs font-bold ml-1 ${
-                  selectedPeriod === 'yearly' ? 'text-white' : 'text-emerald-500'
-                }`}>
-                  -60%
-                </span>
-              </button>
-            </div>
-          </div>
-          
-          {/* Mensagem informativa */}
-          <div className="text-center mt-3">
-            <motion.p 
-              key={selectedPeriod} // Força a animação quando o período muda
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-xs text-gray-600 bg-gradient-to-r from-emerald-50 to-teal-50 inline-block px-3 py-1.5 rounded-full border border-emerald-100"
-            >
-              {selectedPeriod === 'yearly' && '🎉 Economize 60% com o plano anual - melhor custo-benefício!'}
-              {selectedPeriod === 'quarterly' && '💰 Economize 30% com o plano trimestral.'}
-              {selectedPeriod === 'monthly' && '✓ Pagamento mensal sem compromisso de longo prazo.'}
-            </motion.p>
-          </div>
-        </motion.div>
 
         {/* Aviso de suporte via WhatsApp */}
         <motion.div 

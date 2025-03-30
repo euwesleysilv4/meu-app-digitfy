@@ -9,7 +9,7 @@ import {
   BookOpen,
   ShoppingCart
 } from 'lucide-react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 interface SalesStrategy {
@@ -28,10 +28,21 @@ interface SalesStrategy {
 
 const SalesStrategy: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [salesStrategies, setSalesStrategies] = useState<SalesStrategy[]>([]);
   const [currentStrategy, setCurrentStrategy] = useState<SalesStrategy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Determina o caminho de retorno com base na rota atual
+  const getReturnPath = () => {
+    // Se estamos na rota do dashboard, retornamos para a página de listagem do dashboard
+    if (location.pathname.includes('/dashboard')) {
+      return '/dashboard/learning/sales-strategy';
+    }
+    // Caso contrário, retornamos para a rota pública
+    return '/estrategias-vendas';
+  };
   
   useEffect(() => {
     const fetchStrategies = async () => {
@@ -143,7 +154,7 @@ const SalesStrategy: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <Link 
-          to="/estrategias-vendas"
+          to={getReturnPath()}
           className="inline-flex items-center text-emerald-600 hover:text-emerald-700 mb-6"
         >
           <ArrowRight className="h-4 w-4 mr-1 rotate-180" />
@@ -308,7 +319,9 @@ const SalesStrategy: React.FC = () => {
                   </div>
                   
                   <Link
-                    to={`/estrategias-vendas/${strategy.id}`}
+                    to={location.pathname.includes('/dashboard') 
+                      ? `/dashboard/learning/sales-strategy/${strategy.id}`
+                      : `/estrategias-vendas/${strategy.id}`}
                     className="flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700"
                   >
                     <span>Ler mais</span>

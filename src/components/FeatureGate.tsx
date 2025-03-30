@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FeatureKey, usePermissions } from '../services/permissionService';
 import { UserPlan } from '../lib/supabase';
 import { motion } from 'framer-motion';
-import { LockKeyhole, X, ArrowUpRight } from 'lucide-react';
+import { LockKeyhole, X, ArrowUpRight, Zap, ChevronLeft } from 'lucide-react';
 
 interface FeatureGateProps {
   /**
@@ -59,45 +59,96 @@ const FeatureGate: React.FC<FeatureGateProps> = ({
   
   // Renderiza o componente padrão de bloqueio
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="relative bg-white rounded-lg p-8 shadow-lg border border-gray-100 max-w-2xl mx-auto text-center"
-    >
-      <button 
-        onClick={() => window.history.back()} 
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 to-white flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-2xl overflow-hidden"
       >
-        <X size={20} />
-      </button>
-      
-      <div className="bg-amber-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-        <LockKeyhole className="h-8 w-8 text-amber-400" />
-      </div>
-      
-      <h2 className="text-xl font-bold text-gray-800 mb-2">Funcionalidade Bloqueada</h2>
-      
-      <p className="text-gray-600 mb-6">
-        {upgradeMessage}
-      </p>
-      
-      <div className="flex flex-col sm:flex-row justify-center gap-3">
-        <button
-          onClick={() => navigate('/upgrade-plan')}
-          className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
-        >
-          <ArrowUpRight size={18} />
-          Fazer Upgrade
-        </button>
+        {/* Card principal com gradiente */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Faixa decorativa no topo */}
+          <div className="h-3 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+          
+          {/* Conteúdo do card */}
+          <div className="relative p-8">
+            {/* Círculos decorativos */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100 rounded-full opacity-10 -mt-20 -mr-20"></div>
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-100 rounded-full opacity-10 -mb-10 -ml-10"></div>
+            
+            {/* Botão para voltar */}
+            <button 
+              onClick={() => window.history.back()} 
+              className="absolute top-4 right-4 text-emerald-400 hover:text-emerald-600 transition-colors p-1"
+              aria-label="Fechar"
+            >
+              <X size={20} />
+            </button>
+            
+            {/* Ícone principal */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-100">
+                <LockKeyhole className="h-9 w-9 text-white" />
+              </div>
+              
+              {/* Reflexo/brilho no ícone */}
+              <div className="absolute top-3 left-1/2 -translate-x-[14px] w-3 h-3 bg-white opacity-40 rounded-full"></div>
+            </div>
+            
+            {/* Informações sobre o bloqueio */}
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-emerald-800">Funcionalidade Bloqueada</h2>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-2"
+              >
+                <p className="text-emerald-700 font-medium">
+                  {upgradeMessage}
+                </p>
+              </motion.div>
+              
+              {/* Botões de ação */}
+              <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/dashboard/upgrade')}
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 shadow-md shadow-emerald-100/50 transition-all duration-300 hover:shadow-lg"
+                >
+                  <Zap size={18} className="animate-pulse" />
+                  Fazer Upgrade Agora
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => window.history.back()}
+                  className="px-6 py-3 bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-xl font-medium flex items-center justify-center gap-2 transition-all duration-300"
+                >
+                  <ChevronLeft size={18} />
+                  Voltar
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </div>
         
-        <button
-          onClick={() => window.history.back()}
-          className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+        {/* Mensagem informativa abaixo do card */}
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.8 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-xs text-emerald-600 mt-4"
         >
-          Voltar
-        </button>
-      </div>
-    </motion.div>
+          Desbloqueie esta e outras funcionalidades exclusivas 
+          atualizando seu plano para Member ou superior
+        </motion.p>
+      </motion.div>
+    </div>
   );
 };
 
