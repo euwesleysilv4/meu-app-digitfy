@@ -41,7 +41,7 @@ const ReportIssue = () => {
     const message = formatWhatsAppMessage(formData).replace(/\n/g, '%0A');
 
     // Número do WhatsApp (substitua pelo número correto)
-    const whatsappNumber = "5511999999999"; // Substitua pelo número real
+    const whatsappNumber = "91986300548"; // Número atualizado
 
     // Criar o link do WhatsApp
     const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;

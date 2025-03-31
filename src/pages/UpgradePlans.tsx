@@ -683,7 +683,7 @@ const UpgradePlans: React.FC = () => {
               Nossa equipe está pronta para te ajudar a encontrar a melhor solução para o seu projeto.
             </p>
             <a 
-              href="https://wa.me/SEUNUMEROAQUI" 
+              href="https://wa.me/91986300548?text=Ol%C3%A1%2C%20estou%20precisando%20de%20ajuda%20para%20escolher%20um%20plano%20da%20DigitFy." 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center px-6 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-400 to-teal-500 text-white hover:from-emerald-500 hover:to-teal-600 transition-all duration-300"

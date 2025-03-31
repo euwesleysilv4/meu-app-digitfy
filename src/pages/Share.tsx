@@ -226,7 +226,7 @@ const Share: React.FC = () => {
                   {/* Botão de WhatsApp */}
                   <div className="mt-6 sm:mt-8 text-center w-full max-w-4xl mx-auto">
                     <motion.a
-                      href="https://chat.whatsapp.com/grupo-afiliados"
+                      href="https://chat.whatsapp.com/LVpJHjfDLSh441Eq6Vw7wD"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white border border-emerald-200 text-emerald-600 rounded-lg sm:rounded-xl text-sm font-medium hover:bg-emerald-50 transition-all duration-300"

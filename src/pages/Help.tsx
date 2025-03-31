@@ -127,7 +127,7 @@ const Help: React.FC = () => {
                   <span>Tempo médio de resposta: 5 a 30 minutos</span>
                 </div>
                 <a 
-                  href="https://wa.me/SEUNUMEROAQUI" 
+                  href="https://wa.me/91986300548?text=Ol%C3%A1%2C%20estou%20precisando%20de%20ajuda%20na%20DigitFy" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/20"
@@ -256,7 +256,7 @@ const Help: React.FC = () => {
             Nossa equipe está pronta para te ajudar com qualquer dúvida
           </p>
           <a 
-            href="https://wa.me/SEUNUMEROAQUI" 
+            href="https://wa.me/91986300548?text=Ol%C3%A1%2C%20estou%20precisando%20de%20ajuda%20na%20DigitFy" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg shadow-emerald-500/20"
