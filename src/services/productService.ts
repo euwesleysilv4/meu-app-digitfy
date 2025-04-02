@@ -27,7 +27,7 @@ export const productService = {
       console.log('Iniciando busca de produtos recomendados');
       const { data, error } = await supabase
         .from('recommended_products')
-        .select('*');
+        .select('id, name, description, benefits, price, rating, image, category, eliteBadge, topPick, status, addedByAdmin, addedAt, approvedAt, sales_url');
       
       // Log detalhado para depuração
       console.log('Resultado da busca:', { data, error });
@@ -86,7 +86,7 @@ export const productService = {
       // Buscar qualquer produto pendente mesmo se houver problemas com a consulta join
       const { data: simpleData, error: simpleError } = await supabase
         .from('submitted_products')
-        .select('*')
+        .select('id, name, description, benefits, price, image, category, eliteBadge, topPick, status, userId, user_id, salesUrl, sales_url, submittedAt, submitted_at, updatedAt, updated_at, rating')
         .or('status.eq.pendente,status.is.null');
       
       console.log('Produtos pendentes (consulta simplificada):', 
@@ -112,7 +112,8 @@ export const productService = {
         updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),
         userName: 'Usuário',
         userEmail: 'Sem email',
-        status: item.status || 'pendente'
+        status: item.status || 'pendente',
+        rating: item.rating || 0
       }));
       
       console.log('Dados formatados da consulta simplificada:', 
@@ -133,7 +134,7 @@ export const productService = {
       // Obter os dados do produto submetido
       const { data: submittedProduct, error: fetchError } = await supabase
         .from('submitted_products')
-        .select('*')
+        .select('id, name, description, benefits, price, image, category, eliteBadge, topPick, status, userId, user_id, salesUrl, sales_url')
         .eq('id', productId)
         .single();
       
@@ -318,7 +319,7 @@ export const productService = {
         // Verificar se a tabela existe
         const { data: recommendedProducts, error: recommendedError } = await supabase
           .from('recommended_products')
-          .select('*')
+          .select('id, name, description, benefits, price, rating, image, category, eliteBadge, topPick, status, addedByAdmin, addedAt, approvedAt, sales_url')
           .limit(1);
         
         if (recommendedError) {
@@ -330,7 +331,7 @@ export const productService = {
           // Contar produtos na tabela
           const { count, error: countError } = await supabase
             .from('recommended_products')
-            .select('*', { count: 'exact', head: true });
+            .select('id', { count: 'exact', head: true });
           
           diagnosticData.recommended.count = count || 0;
           
@@ -350,7 +351,7 @@ export const productService = {
         // Verificar se a tabela existe
         const { data: submittedProducts, error: submittedError } = await supabase
           .from('submitted_products')
-          .select('*')
+          .select('id, name, description, benefits, price, rating, image, category, eliteBadge, topPick, status, userId, user_id, salesUrl, sales_url, submittedAt, submitted_at, updatedAt, updated_at')
           .limit(1);
         
         if (submittedError) {
@@ -362,7 +363,7 @@ export const productService = {
           // Contar produtos na tabela
           const { count, error: countError } = await supabase
             .from('submitted_products')
-            .select('*', { count: 'exact', head: true });
+            .select('id', { count: 'exact', head: true });
           
           diagnosticData.submitted.count = count || 0;
           
@@ -401,7 +402,7 @@ export const productService = {
         // Verificar se a tabela existe
         const { data: tableExists, error: tableError } = await supabase
           .from(tableName)
-          .select('*')
+          .select('id')
           .limit(1);
         
         // Buscar um registro para ver sua estrutura

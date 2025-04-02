@@ -54,6 +54,7 @@ const ProfileStructureGenerator = () => {
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [bioError, setBioError] = useState<string | null>(null);
   const [bioCopied, setBioCopied] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<'instagram' | 'tiktok'>('instagram');
 
   const niches: Niche[] = [
     {
@@ -636,7 +637,15 @@ const ProfileStructureGenerator = () => {
 
       // Construindo o prompt de forma mais estruturada
       const especialidade = selectedSubtopicLabel ? ` especializado em ${selectedSubtopicLabel}` : '';
-      const prompt = `Gere uma biografia profissional para Instagram em português brasileiro para um profissional de "${selectedNicheLabel}${especialidade}". A bio deve ter 4 linhas, usar emojis relevantes no início de cada linha, destacar expertise e benefícios para o público, e terminar com um call-to-action sutil.${bioPreference}`;
+      
+      let platformSpecificPrompt = '';
+      if (selectedPlatform === 'instagram') {
+        platformSpecificPrompt = `Gere uma biografia profissional para Instagram em português brasileiro para um profissional de "${selectedNicheLabel}${especialidade}". A bio deve ter 4 linhas, usar emojis relevantes no início de cada linha, destacar expertise e benefícios para o público, e terminar com um call-to-action sutil.`;
+      } else {
+        platformSpecificPrompt = `Gere uma biografia profissional para TikTok em português brasileiro para um profissional de "${selectedNicheLabel}${especialidade}". A bio deve ser curta (máximo 80 caracteres), impactante, usar no máximo 2 emojis estratégicos, focar em chamar atenção rapidamente e incentivar o público a assistir os vídeos. Deve refletir o estilo dinâmico do TikTok.`;
+      }
+      
+      const prompt = `${platformSpecificPrompt}${bioPreference}`;
 
       console.log('Enviando requisição para API Deepseek:', prompt);
       
@@ -657,7 +666,7 @@ const ProfileStructureGenerator = () => {
           messages: [
             {
               role: 'system',
-              content: 'Você é um assistente especializado em criar biografias profissionais para Instagram. Forneça apenas a biografia, sem explicações adicionais.'
+              content: `Você é um assistente especializado em criar biografias profissionais para ${selectedPlatform === 'instagram' ? 'Instagram' : 'TikTok'}. Forneça apenas a biografia, sem explicações adicionais.`
             },
             {
               role: 'user',
@@ -764,58 +773,102 @@ const ProfileStructureGenerator = () => {
       console.error('Erro completo ao gerar bio:', error);
       
       // Fallback para quando a API falha - geração local de bio
-      const nicheBios: Record<string, string[]> = {
-        marketing: [
-          "📈 Especialista em Marketing Digital\n🚀 Estratégias de crescimento que geram resultados\n💡 Ajudo empresas a alcançarem mais clientes\n🎯 Vamos conversar sobre seu próximo projeto?",
-          "🚀 Transformando ideias em estratégias digitais\n📊 Especialista em performance e dados\n💻 Marketing que converte e escala seu negócio\n📱 Entre em contato para uma análise gratuita"
-        ],
-        design: [
-          "🎨 Designer apaixonado por soluções criativas\n✨ Transformando marcas em experiências memoráveis\n📱 UI/UX que encanta e converte\n🖌️ Vamos dar vida ao seu projeto?",
-          "✨ Criando designs que comunicam e convertem\n🖌️ Especialista em identidade visual e UI/UX\n🎨 Soluções criativas para sua marca se destacar\n🔍 Agende uma consulta de design"
-        ],
-        coaching: [
-          "🧠 Coach certificado com método exclusivo\n💪 Especialista em transformação e resultados\n✨ Ajudo você a alcançar seu potencial máximo\n🚀 Agende uma sessão diagnóstico gratuita",
-          "✨ Transformando potencial em resultados reais\n💡 Metodologia exclusiva e personalizada\n🎯 Focado em ajudar você a atingir suas metas\n💬 Vamos conversar sobre seu futuro?"
-        ],
-        tech: [
-          "💻 Desenvolvendo soluções tecnológicas inovadoras\n⚙️ Especialista em otimização e performance\n🔧 Transformando problemas em oportunidades\n🚀 Vamos criar algo incrível juntos?",
-          "🤖 Especialista em soluções de tecnologia\n⚡ Desenvolvimento ágil e eficiente\n🌐 Conectando pessoas através da tecnologia\n💬 Conte-me sobre seu projeto"
-        ],
-        finance: [
-          "💰 Especialista em finanças e investimentos\n📊 Estratégias personalizadas para seu patrimônio\n💹 Resultados comprovados no mercado\n🔐 Agende uma consultoria financeira",
-          "📈 Transformando sonhos em planos financeiros\n💼 Especialista em investimentos e planejamento\n💰 Estratégias personalizadas para seu perfil\n🏦 Vamos construir seu futuro financeiro?"
-        ],
-        education: [
-          "📚 Educador apaixonado por transformar vidas\n🎓 Metodologia comprovada de aprendizado\n💡 Tornando o conhecimento acessível e prático\n📝 Agende uma aula experimental",
-          "🎓 Especialista em educação personalizada\n📚 Desenvolvendo habilidades para o futuro\n🧠 Métodos inovadores que potencializam resultados\n✨ Transforme seu conhecimento comigo"
-        ],
-        health: [
-          "💪 Especialista em saúde e bem-estar\n🥗 Transformando vidas através de hábitos saudáveis\n❤️ Programas personalizados para seus objetivos\n🌱 Agende uma consulta inicial gratuita",
-          "🌱 Promovendo saúde integral e equilíbrio\n💪 Metodologia exclusiva baseada em ciência\n🧠 Transformando corpo e mente\n⚡ Vamos começar sua jornada de transformação?"
-        ],
-        business: [
-          "💼 Especialista em estratégias de negócios\n📈 Transformando empresas com resultados comprovados\n🚀 Soluções inovadoras para desafios complexos\n🎯 Vamos conversar sobre seu negócio?",
-          "🚀 Empreendedor com foco em resultados\n💡 Desenvolvendo negócios de alto impacto\n📊 Estratégias testadas e aprovadas pelo mercado\n💼 Agende uma consultoria estratégica"
-        ],
-        creative: [
-          "🎨 Artista e criador de conteúdo original\n✨ Transformando ideias em arte visual impactante\n🖌️ Projetos criativos que conectam e emocionam\n📸 Vamos colaborar no seu próximo projeto?",
-          "📸 Capturando momentos e criando histórias\n🎬 Especialista em narrativa visual\n✨ Arte que conecta marcas e pessoas\n🎨 Entre em contato para orçamentos"
-        ],
-        legal: [
-          "⚖️ Advogado especializado em soluções jurídicas\n📜 Experiência comprovada em casos complexos\n🔍 Atendimento personalizado e resultados efetivos\n📋 Agende uma consulta inicial",
-          "⚖️ Especialista em direito com abordagem estratégica\n📝 Soluções jurídicas para proteger seus interesses\n🏛️ Atuação ética e resultados consistentes\n💼 Vamos discutir seu caso?"
-        ]
+      const nicheBios: Record<string, Record<string, string[]>> = {
+        instagram: {
+          marketing: [
+            "📈 Especialista em Marketing Digital\n🚀 Estratégias de crescimento que geram resultados\n💡 Ajudo empresas a alcançarem mais clientes\n🎯 Vamos conversar sobre seu próximo projeto?",
+            "🚀 Transformando ideias em estratégias digitais\n📊 Especialista em performance e dados\n💻 Marketing que converte e escala seu negócio\n📱 Entre em contato para uma análise gratuita"
+          ],
+          design: [
+            "🎨 Designer apaixonado por soluções criativas\n✨ Transformando marcas em experiências memoráveis\n📱 UI/UX que encanta e converte\n🖌️ Vamos dar vida ao seu projeto?",
+            "✨ Criando designs que comunicam e convertem\n🖌️ Especialista em identidade visual e UI/UX\n🎨 Soluções criativas para sua marca se destacar\n🔍 Agende uma consulta de design"
+          ],
+          coaching: [
+            "🧠 Coach certificado com método exclusivo\n💪 Especialista em transformação e resultados\n✨ Ajudo você a alcançar seu potencial máximo\n🚀 Agende uma sessão diagnóstico gratuita",
+            "✨ Transformando potencial em resultados reais\n💡 Metodologia exclusiva e personalizada\n🎯 Focado em ajudar você a atingir suas metas\n💬 Vamos conversar sobre seu futuro?"
+          ],
+          tech: [
+            "💻 Desenvolvendo soluções tecnológicas inovadoras\n⚙️ Especialista em otimização e performance\n🔧 Transformando problemas em oportunidades\n🚀 Vamos criar algo incrível juntos?",
+            "🤖 Especialista em soluções de tecnologia\n⚡ Desenvolvimento ágil e eficiente\n🌐 Conectando pessoas através da tecnologia\n💬 Conte-me sobre seu projeto"
+          ],
+          finance: [
+            "💰 Especialista em finanças e investimentos\n📊 Estratégias personalizadas para seu patrimônio\n💹 Resultados comprovados no mercado\n🔐 Agende uma consultoria financeira",
+            "📈 Transformando sonhos em planos financeiros\n💼 Especialista em investimentos e planejamento\n💰 Estratégias personalizadas para seu perfil\n🏦 Vamos construir seu futuro financeiro?"
+          ],
+          education: [
+            "📚 Educador apaixonado por transformar vidas\n🎓 Metodologia comprovada de aprendizado\n💡 Tornando o conhecimento acessível e prático\n📝 Agende uma aula experimental",
+            "🎓 Especialista em educação personalizada\n📚 Desenvolvendo habilidades para o futuro\n🧠 Métodos inovadores que potencializam resultados\n✨ Transforme seu conhecimento comigo"
+          ],
+          health: [
+            "💪 Especialista em saúde e bem-estar\n🥗 Transformando vidas através de hábitos saudáveis\n❤️ Programas personalizados para seus objetivos\n🌱 Agende uma consulta inicial gratuita",
+            "🌱 Promovendo saúde integral e equilíbrio\n💪 Metodologia exclusiva baseada em ciência\n🧠 Transformando corpo e mente\n⚡ Vamos começar sua jornada de transformação?"
+          ],
+          business: [
+            "💼 Especialista em estratégias de negócios\n📈 Transformando empresas com resultados comprovados\n🚀 Soluções inovadoras para desafios complexos\n🎯 Vamos conversar sobre seu negócio?",
+            "🚀 Empreendedor com foco em resultados\n💡 Desenvolvendo negócios de alto impacto\n📊 Estratégias testadas e aprovadas pelo mercado\n💼 Agende uma consultoria estratégica"
+          ],
+          creative: [
+            "🎨 Artista e criador de conteúdo original\n✨ Transformando ideias em arte visual impactante\n🖌️ Projetos criativos que conectam e emocionam\n📸 Vamos colaborar no seu próximo projeto?",
+            "📸 Capturando momentos e criando histórias\n🎬 Especialista em narrativa visual\n✨ Arte que conecta marcas e pessoas\n🎨 Entre em contato para orçamentos"
+          ],
+          legal: [
+            "⚖️ Advogado especializado em soluções jurídicas\n📜 Experiência comprovada em casos complexos\n🔍 Atendimento personalizado e resultados efetivos\n📋 Agende uma consulta inicial",
+            "⚖️ Especialista em direito com abordagem estratégica\n📝 Soluções jurídicas para proteger seus interesses\n🏛️ Atuação ética e resultados consistentes\n💼 Vamos discutir seu caso?"
+          ]
+        },
+        tiktok: {
+          marketing: [
+            "🚀 Dicas de marketing que vão viralizar seu negócio! Assista ↗️",
+            "📲 Transformando seguidores em clientes! #MarketingDigital"
+          ],
+          design: [
+            "🎨 Designs que fazem a diferença! Deslize para ver ↗️",
+            "✨ Design que impressiona! Siga para inspiração diária."
+          ],
+          coaching: [
+            "🧠 Transformação garantida! Veja meu método ↗️",
+            "💡 Sua melhor versão está aqui! #Coaching"
+          ],
+          tech: [
+            "💻 Tecnologia simplificada! Tutoriais exclusivos ↗️",
+            "⚡ Soluções tech para o dia a dia. #TechTips"
+          ],
+          finance: [
+            "💰 Dicas financeiras que ninguém te contou! Siga ↗️",
+            "📈 Construindo riqueza um TikTok de cada vez!"
+          ],
+          education: [
+            "📚 Aprendizado que transforma! Confira ↗️",
+            "🎓 Educação para o futuro! Dicas diárias."
+          ],
+          health: [
+            "💪 Treinos e dicas de saúde em 60s! Confira ↗️",
+            "🥗 Saúde que cabe no seu dia. #SaúdeEmFoco"
+          ],
+          business: [
+            "💼 Empreendendo com estratégia! Case de sucesso ↗️",
+            "🚀 Negócios que impactam! Métodos exclusivos."
+          ],
+          creative: [
+            "🎬 Arte em movimento! Novos vídeos toda semana ↗️",
+            "📸 Criatividade que inspira! #ArteDigital"
+          ],
+          legal: [
+            "⚖️ Direitos explicados em segundos! Siga para mais ↗️",
+            "📝 Desmistificando o mundo jurídico! #DireitoSimples"
+          ]
+        }
       };
 
-      // Determinar qual conjunto de bios usar com base no nicho selecionado
-      const bioSet = nicheBios[selectedNiche] || nicheBios.marketing;
+      // Determinar qual conjunto de bios usar com base na plataforma e nicho selecionados
+      const bioSet = nicheBios[selectedPlatform]?.[selectedNiche] || nicheBios[selectedPlatform].marketing;
       
       // Selecionar uma bio aleatória do conjunto
       const randomBio = bioSet[Math.floor(Math.random() * bioSet.length)];
       
       // Ajustar a bio se um subtópico específico foi selecionado
       let finalBio = randomBio;
-      if (selectedSubtopic) {
+      if (selectedPlatform === 'instagram' && selectedSubtopic) {
         // Obter o label do subtópico
         const subtopicLabel = niches.find(n => n.value === selectedNiche)?.subtopics.find(s => s.value === selectedSubtopic)?.label || '';
         
@@ -834,18 +887,25 @@ const ProfileStructureGenerator = () => {
 
       // Considerar preferências do usuário se houver
       if (profile.bioPreference) {
-        // Incorporar algum elemento da preferência do usuário
-        const bioLines = finalBio.split('\n');
-        if (bioLines.length >= 4) {
-          // Substituir a quarta linha para incluir algo da preferência
+        if (selectedPlatform === 'instagram') {
+          // Incorporar algum elemento da preferência do usuário
+          const bioLines = finalBio.split('\n');
+          if (bioLines.length >= 4) {
+            // Substituir a quarta linha para incluir algo da preferência
+            const preferenceWords = profile.bioPreference.split(' ');
+            const shortPreference = preferenceWords.slice(0, Math.min(5, preferenceWords.length)).join(' ');
+            
+            const emojiSet = nicheEmojis[selectedNiche]?.default || ['✨', '💫', '🌟'];
+            const preferenceEmoji = emojiSet[Math.floor(Math.random() * emojiSet.length)];
+            
+            bioLines[3] = `${preferenceEmoji} ${shortPreference}... Vamos conversar?`;
+            finalBio = bioLines.join('\n');
+          }
+        } else {
+          // Para TikTok, incorporar uma preferência mais curta
           const preferenceWords = profile.bioPreference.split(' ');
-          const shortPreference = preferenceWords.slice(0, Math.min(5, preferenceWords.length)).join(' ');
-          
-          const emojiSet = nicheEmojis[selectedNiche]?.default || ['✨', '💫', '🌟'];
-          const preferenceEmoji = emojiSet[Math.floor(Math.random() * emojiSet.length)];
-          
-          bioLines[3] = `${preferenceEmoji} ${shortPreference}... Vamos conversar?`;
-          finalBio = bioLines.join('\n');
+          const shortPreference = preferenceWords.slice(0, Math.min(3, preferenceWords.length)).join(' ');
+          finalBio = `✨ ${shortPreference}... ${finalBio.split('!')[0]}!`;
         }
       }
       
@@ -926,13 +986,54 @@ const ProfileStructureGenerator = () => {
           transition={{ delay: 0.2 }}
         >
           <p className="text-emerald-600">
-            Crie uma estrutura profissional para seu perfil do Instagram. 
+            Crie uma estrutura profissional para seu perfil do Instagram ou TikTok. 
             Personalize cada elemento e visualize em tempo real.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           <motion.div className="space-y-6">
+            {/* Seletor de Plataforma */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Selecione a Plataforma
+                </h3>
+                
+                {/* Botões de plataforma */}
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  <button
+                    onClick={() => setSelectedPlatform('instagram')}
+                    className={`flex items-center justify-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      selectedPlatform === 'instagram'
+                        ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-500 ring-offset-2'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    Instagram
+                  </button>
+                  <button
+                    onClick={() => setSelectedPlatform('tiktok')}
+                    className={`flex items-center justify-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      selectedPlatform === 'tiktok'
+                        ? 'bg-black text-white ring-2 ring-black ring-offset-2'
+                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z" fill="currentColor"/>
+                    </svg>
+                    TikTok
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Seletor de Nicho Atualizado */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6">
@@ -1252,185 +1353,332 @@ const ProfileStructureGenerator = () => {
               </div>
 
               {/* Container do Preview */}
-              <div className="bg-white rounded-xl shadow-md border border-gray-200 max-w-[380px] mx-auto overflow-hidden">
-                {/* Header do Instagram */}
-                <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-sm">{profile.username}</span>
+              {selectedPlatform === 'instagram' ? (
+                <div className="bg-white rounded-xl shadow-md border border-gray-200 max-w-[380px] mx-auto overflow-hidden">
+                  {/* Header do Instagram */}
+                  <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-semibold text-sm">{profile.username}</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                    <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                    <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                  </div>
-                </div>
 
-                {/* Conteúdo do Perfil */}
-                <div className="p-4">
-                  {/* Cabeçalho do Perfil */}
-                  <div className="flex items-start mb-5">
-                    {/* Foto do Perfil */}
-                    <div className="w-[77px] h-[77px] rounded-full border border-gray-200 overflow-hidden flex-shrink-0">
-                      {uploadedImage ? (
-                        <img 
-                          src={uploadedImage} 
-                          alt="Profile" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                          <User className="w-10 h-10 text-gray-300" />
+                  {/* Conteúdo do Perfil */}
+                  <div className="p-4">
+                    {/* Cabeçalho do Perfil */}
+                    <div className="flex items-start mb-5">
+                      {/* Foto do Perfil */}
+                      <div className="w-[77px] h-[77px] rounded-full border border-gray-200 overflow-hidden flex-shrink-0">
+                        {uploadedImage ? (
+                          <img 
+                            src={uploadedImage} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-50 flex items-center justify-center">
+                            <User className="w-10 h-10 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Estatísticas */}
+                      <div className="flex-1 ml-6">
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <div className="font-semibold text-sm">{profile.posts}</div>
+                            <div className="text-xs text-gray-500">publicações</div>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm">{profile.followers}</div>
+                            <div className="text-xs text-gray-500">seguidores</div>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm">{profile.following}</div>
+                            <div className="text-xs text-gray-500">seguindo</div>
+                          </div>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Informações do Perfil */}
+                    <div className="space-y-2">
+                      <div>
+                        <div className="font-semibold text-sm">{profile.displayName}</div>
+                        <div className="text-xs text-gray-500">{profile.category}</div>
+                      </div>
+                      
+                      <div className="text-xs whitespace-pre-line leading-relaxed">
+                        {profile.bio}
+                      </div>
+
+                      {profile.location && (
+                        <div className="flex items-center text-xs text-gray-500">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {profile.location}
+                        </div>
+                      )}
+
+                      {profile.link && (
+                        <a 
+                          href={`https://${profile.link}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="flex items-center text-xs text-blue-900 font-medium"
+                        >
+                          <LinkIcon className="h-3 w-3 mr-1" />
+                          {profile.link}
+                        </a>
                       )}
                     </div>
 
+                    {/* Botões do Perfil */}
+                    <div className="mt-3 grid grid-cols-7 gap-1">
+                      <button className="col-span-6 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-md text-xs font-medium">
+                        Editar perfil
+                      </button>
+                      <button className="col-span-1 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-md text-xs font-medium flex items-center justify-center">
+                        <User className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tabs do Instagram */}
+                  <div className="grid grid-cols-3 border-t border-gray-200">
+                    <div className="py-2 flex justify-center border-t-2 border-black">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                    </div>
+                    <div className="py-2 flex justify-center text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                    </div>
+                    <div className="py-2 flex justify-center text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-md border border-gray-200 max-w-[380px] mx-auto overflow-hidden">
+                  {/* Cabeçalho do TikTok */}
+                  <div className="bg-white text-black px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z" fill="currentColor"/>
+                      </svg>
+                      <span className="font-semibold text-sm">TikTok</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Conteúdo do Perfil TikTok */}
+                  <div className="p-4 bg-white text-black">
+                    {/* Foto do Perfil e Informações */}
+                    <div className="flex flex-col items-center mb-4">
+                      <div className="w-[120px] h-[120px] rounded-full border border-gray-200 overflow-hidden mb-2">
+                        {uploadedImage ? (
+                          <img 
+                            src={uploadedImage} 
+                            alt="Profile" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <User className="w-16 h-16 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-lg">@{profile.username}</div>
+                      </div>
+                    </div>
+
                     {/* Estatísticas */}
-                    <div className="flex-1 ml-6">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <div className="font-semibold text-sm">{profile.posts}</div>
-                          <div className="text-xs text-gray-500">publicações</div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-sm">{profile.followers}</div>
-                          <div className="text-xs text-gray-500">seguidores</div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-sm">{profile.following}</div>
-                          <div className="text-xs text-gray-500">seguindo</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Informações do Perfil */}
-                  <div className="space-y-2">
-                    <div>
-                      <div className="font-semibold text-sm">{profile.displayName}</div>
-                      <div className="text-xs text-gray-500">{profile.category}</div>
-                    </div>
-                    
-                    <div className="text-xs whitespace-pre-line leading-relaxed">
-                      {profile.bio}
-                    </div>
-
-                    {profile.location && (
-                      <div className="flex items-center text-xs text-gray-500">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {profile.location}
-                      </div>
-                    )}
-
-                    {profile.link && (
-                      <a 
-                        href={`https://${profile.link}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex items-center text-xs text-blue-900 font-medium"
-                      >
-                        <LinkIcon className="h-3 w-3 mr-1" />
-                        {profile.link}
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Botões do Perfil */}
-                  <div className="mt-3 grid grid-cols-7 gap-1">
-                    <button className="col-span-6 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-md text-xs font-medium">
-                      Editar perfil
-                    </button>
-                    <button className="col-span-1 px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-md text-xs font-medium flex items-center justify-center">
-                      <User className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tabs do Instagram */}
-                <div className="grid grid-cols-3 border-t border-gray-200">
-                  <div className="py-2 flex justify-center border-t-2 border-black">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="7" height="7"></rect>
-                      <rect x="14" y="3" width="7" height="7"></rect>
-                      <rect x="14" y="14" width="7" height="7"></rect>
-                      <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                  </div>
-                  <div className="py-2 flex justify-center text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                  </div>
-                  <div className="py-2 flex justify-center text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Botões de Ação - Redesenhados */}
-              <div className="mt-6 space-y-3">
-                {/* Dicas */}
-                  <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-emerald-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="16" x2="12" y2="12"></line>
-                          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
+                    <div className="flex justify-center space-x-16 mb-6 text-center">
+                      <div>
+                        <div className="font-bold">{profile.following}</div>
+                        <div className="text-xs text-gray-500">Seguindo</div>
                       </div>
                       <div>
-                        <h3 className="font-medium text-emerald-800 text-sm">Dica 1: Emojis Estratégicos</h3>
-                        <p className="text-xs text-emerald-600 mt-1">
-                          Use emojis estrategicamente para destacar pontos importantes e tornar seu perfil mais atrativo visualmente.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-emerald-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
+                        <div className="font-bold">{profile.followers}</div>
+                        <div className="text-xs text-gray-500">Seguidores</div>
                       </div>
                       <div>
-                        <h3 className="font-medium text-emerald-800 text-sm">Dica 2: Consistência no Conteúdo</h3>
-                        <p className="text-xs text-emerald-600 mt-1">
-                          Mantenha uma linha editorial consistente. Escolha uma paleta de cores e estilo que represente sua marca pessoal.
-                        </p>
+                        <div className="font-bold">{profile.posts * 1000}</div>
+                        <div className="text-xs text-gray-500">Curtidas</div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-emerald-100 p-2 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    {/* Botões de Ação */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      <button className="col-span-2 px-3 py-2 bg-black text-white rounded-md text-sm font-medium">
+                        Editar perfil
+                      </button>
+                      <button className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm font-medium flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                          <polyline points="16 6 12 2 8 6"></polyline>
+                          <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                      </button>
+                      <button className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm font-medium flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3"></circle>
+                          <circle cx="6" cy="12" r="3"></circle>
+                          <circle cx="18" cy="19" r="3"></circle>
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Bio e Informações */}
+                    <div className="mb-4">
+                      <div className="text-sm text-center">{profile.displayName}</div>
+                      <div className="whitespace-pre-line text-sm my-2 text-center">
+                        {profile.bio}
+                      </div>
+                      
+                      {/* Link */}
+                      {profile.link && (
+                        <div className="flex items-center justify-center py-1 mb-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-gray-500">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                          </svg>
+                          <a 
+                            href={`https://${profile.link}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-sm text-gray-700"
+                          >
+                            {profile.link}
+                          </a>
+                        </div>
+                      )}
+                      
+                      {/* TikTok Studio */}
+                      <div className="flex items-center justify-center py-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff0050" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                        <span className="text-sm font-medium">TikTok Studio</span>
+                      </div>
+                    </div>
+
+                    {/* Abas inferiores */}
+                    <div className="border-t border-gray-200 mt-4 pt-2 flex justify-between">
+                      <div className="flex-1 flex justify-center p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="4" y1="9" x2="20" y2="9"></line>
+                          <line x1="4" y1="15" x2="20" y2="15"></line>
+                          <line x1="10" y1="3" x2="8" y2="21"></line>
+                          <line x1="16" y1="3" x2="14" y2="21"></line>
                         </svg>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-emerald-800 text-sm">Dica 3: Storytelling Autêntico</h3>
-                        <p className="text-xs text-emerald-600 mt-1">
-                          Conte sua história de forma autêntica. Compartilhe jornada, desafios e conquistas para criar conexão genuína com seu público.
-                        </p>
+                      <div className="flex-1 flex justify-center p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                      </div>
+                      <div className="flex-1 flex justify-center p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                      </div>
+                      <div className="flex-1 flex justify-center p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Botões de Ação - Redesenhados */}
+      <div className="mt-6 space-y-3">
+        {/* Dicas */}
+          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+            <div className="flex items-start space-x-3">
+              <div className="bg-emerald-100 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-emerald-800 text-sm">Dica 1: Emojis Estratégicos</h3>
+                <p className="text-xs text-emerald-600 mt-1">
+                  Use emojis estrategicamente para destacar pontos importantes e tornar seu perfil mais atrativo visualmente.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+            <div className="flex items-start space-x-3">
+              <div className="bg-emerald-100 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-emerald-800 text-sm">Dica 2: Consistência no Conteúdo</h3>
+                <p className="text-xs text-emerald-600 mt-1">
+                  Mantenha uma linha editorial consistente. Escolha uma paleta de cores e estilo que represente sua marca pessoal.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+            <div className="flex items-start space-x-3">
+              <div className="bg-emerald-100 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-emerald-800 text-sm">Dica 3: Storytelling Autêntico</h3>
+                <p className="text-xs text-emerald-600 mt-1">
+                  Conte sua história de forma autêntica. Compartilhe jornada, desafios e conquistas para criar conexão genuína com seu público.
+                </p>
+              </div>
+            </div>
+          </div>
+      </div>
     </div>
   );
 };

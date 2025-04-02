@@ -19,6 +19,7 @@ export type FeatureKey =
   | 'digitalGames'
   | 'storytellingGenerator'
   | 'orderBumpGenerator'
+  | 'tools'
   // Comunidade
   | 'whatsappGroups'
   | 'discordServers'
@@ -80,6 +81,7 @@ export const featureNames: Record<FeatureKey, string> = {
   digitalGames: 'Jogos Digitais',
   storytellingGenerator: 'Gerador de Storytelling',
   orderBumpGenerator: 'Gerador de Order Bump',
+  tools: 'Ferramentas',
   // Comunidade
   whatsappGroups: 'Grupos de WhatsApp',
   discordServers: 'Servidores no Discord',
@@ -144,6 +146,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     digitalGames: true,
     storytellingGenerator: false,
     orderBumpGenerator: true,
+    tools: true,
     // Comunidade - Tudo liberado exceto promoção
     whatsappGroups: true,
     discordServers: true,
@@ -204,6 +207,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     digitalGames: true,
     storytellingGenerator: true,
     orderBumpGenerator: true,
+    tools: true,
     // Comunidade
     whatsappGroups: true,
     discordServers: true,
@@ -264,6 +268,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     digitalGames: true,
     storytellingGenerator: true,
     orderBumpGenerator: true,
+    tools: true,
     // Comunidade - Todas as funções do plano Gratuito e Member
     whatsappGroups: true,
     discordServers: true,
@@ -324,6 +329,7 @@ export const featurePermissions: Record<UserPlan, Record<FeatureKey, boolean>> =
     digitalGames: true,
     storytellingGenerator: true,
     orderBumpGenerator: true,
+    tools: true,
     // Comunidade - Todas as funções do plano Gratuito, Member e Pro
     whatsappGroups: true,
     discordServers: true,
@@ -403,6 +409,7 @@ export const minimumPlans: Record<FeatureKey, UserPlan> = {
   digitalGames: 'member',
   storytellingGenerator: 'member',
   orderBumpGenerator: 'gratuito',
+  tools: 'gratuito',
   // Comunidade
   whatsappGroups: 'gratuito',
   discordServers: 'member',
@@ -465,6 +472,7 @@ export const upgradeMessages: Record<FeatureKey, string> = {
   digitalGames: 'Atualize para o plano Member para acessar os Jogos Digitais.',
   storytellingGenerator: 'Atualize para o plano Member para acessar o Gerador de Storytelling.',
   orderBumpGenerator: 'Atualize para o plano Member para acessar o Gerador de Order Bump.',
+  tools: 'Faça upgrade para acessar todas as ferramentas disponíveis.',
   // Comunidade
   whatsappGroups: 'Este recurso já está disponível no seu plano atual.',
   discordServers: 'Este recurso já está disponível no seu plano Member.',

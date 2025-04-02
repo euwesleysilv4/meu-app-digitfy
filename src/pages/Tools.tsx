@@ -169,6 +169,16 @@ const Tools = () => {
     }
   };
 
+  // Função para corrigir caminhos baseado na localização atual
+  const getCorrectPath = (path: string) => {
+    const currentPath = window.location.pathname;
+    // Se estamos no dashboard, precisamos garantir que o caminho tenha o prefixo /dashboard
+    if (currentPath.includes('/dashboard')) {
+      return path.replace(/^\/tools/, '/dashboard/tools');
+    }
+    return path;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Header Hero Section */}
@@ -243,7 +253,7 @@ const Tools = () => {
                   className="group h-full"
                 >
                   <Link
-                    to={tool.path}
+                    to={getCorrectPath(tool.path)}
                     className="block bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 relative h-full flex flex-col"
                   >
                     {/* Imagem de Fundo com Overlay */}

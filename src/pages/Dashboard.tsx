@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
         // Buscar banner ativo para hoje
         const { data, error } = await supabase
           .from('banners')
-          .select('*')
+          .select('id, imagem_desktop, imagem_mobile, url_destino, ativo, data_inicio, data_fim, titulo')
           .eq('ativo', true)
           .lte('data_inicio', today) // Data de início <= hoje
           .or(`data_fim.is.null, data_fim.gte.${today}`) // Data de fim é null OU data_fim >= hoje
@@ -452,7 +452,7 @@ const TutorialVideosSection: React.FC<{ categoria: string; titulo: string }> = (
         // Buscar TODOS os vídeos ativos desta categoria
         const { data, error } = await supabaseClient
           .from('tutorial_videos')
-          .select('*')
+          .select('id, titulo, descricao, youtube_id, categoria, ativo, ordem')
           .eq('categoria', categoria)
           .eq('ativo', true)
           .order('ordem', { ascending: true });

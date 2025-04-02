@@ -424,7 +424,7 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
             {isSpecificAdmin && (
               <div>
                 <MenuItem 
-                  to="/admin" 
+                  to="/admin/dashboard" 
                   icon={ShieldCheck} 
                   label="Administração" 
                   hasDropdown 

@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { BookOpen, Clock, Video, FileText, Tag, ExternalLink, Search, Info, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { BookOpen, Clock, Video, FileText, Tag, ExternalLink, Search, Info, X, Plus, Send } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { userService } from "../services/userService";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import React from 'react';
 
 interface RelevantContent {
   id: string;
@@ -13,7 +16,7 @@ interface RelevantContent {
   content: string;
   image_url: string;
   external_url?: string;
-  status: 'published' | 'draft' | 'scheduled';
+  status: 'published' | 'draft' | 'scheduled' | 'pending';
   created_at: string;
   updated_at: string;
   author: string;
@@ -21,6 +24,278 @@ interface RelevantContent {
   view_count: number;
   like_count: number;
 }
+
+// Interface para os props do ContentSubmitModal
+interface ContentSubmitModalProps {
+  show: boolean;
+  isSubmitting: boolean;
+  submitSuccess: boolean;
+  newContent: Partial<RelevantContent>;
+  onClose: () => void;
+  onSubmit: () => void;
+  onTitleChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onImageUrlChange: (value: string) => void;
+  onTagsChange: (value: string) => void;
+  onContentChange: (value: string) => void;
+}
+
+// Alterar URLs de imagens de placeholder para evitar requisições infinitas
+const DEFAULT_IMAGE_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='400' y='300' font-family='Arial' font-size='32' fill='%236b7280' text-anchor='middle' dominant-baseline='middle'%3ESem Imagem%3C/text%3E%3C/svg%3E";
+const ERROR_IMAGE_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f3f4f6'/%3E%3Ctext x='400' y='300' font-family='Arial' font-size='32' fill='%236b7280' text-anchor='middle' dominant-baseline='middle'%3EImagem Indisponível%3C/text%3E%3C/svg%3E";
+
+// Componente para o Player do YouTube
+const YouTubeEmbed = ({ videoId, title }: { videoId: string, title: string }) => {
+  return (
+    <div className="my-8">
+      <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg">
+        <iframe 
+          className="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
+      </div>
+      <p className="text-sm text-gray-500 mt-2 text-center">
+        <Video className="inline-block w-4 h-4 mr-1 text-red-500" />
+        <span>Vídeo do YouTube: {title}</span>
+      </p>
+    </div>
+  );
+};
+
+// Função para extrair o ID do vídeo de um link do YouTube
+const extractYouTubeId = (url: string) => {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
+};
+
+// Função para processar o conteúdo HTML e substituir links do YouTube por players
+const processYouTubeLinks = (content: string) => {
+  if (!content) return '';
+  
+  let processedContent = content;
+  
+  // 1. Processar links diretos do YouTube em formato de texto
+  const directYoutubeRegex = /(https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[^\s<]*)|https?:\/\/(www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*))/g;
+  
+  processedContent = processedContent.replace(directYoutubeRegex, (match, url, _1, videoId1, _2, videoId2) => {
+    const videoId = videoId1 || videoId2;
+    if (!videoId) return match;
+    
+    return `<div class="youtube-player" data-videoid="${videoId}" data-title="Vídeo do YouTube"></div>`;
+  });
+  
+  // 2. Processar links do YouTube em formato de âncora HTML
+  const anchorYoutubeRegex = /<a\s+(?:[^>]*?\s+)?href="(https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[^"]*)|https?:\/\/(www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[^"]*))">([^<]*)<\/a>/gi;
+  
+  processedContent = processedContent.replace(anchorYoutubeRegex, (match, url, _1, videoId1, _2, videoId2, title) => {
+    const videoId = videoId1 || videoId2;
+    if (!videoId) return match;
+    
+    return `<div class="youtube-player" data-videoid="${videoId}" data-title="${title || 'Vídeo do YouTube'}"></div>`;
+  });
+  
+  // 3. Processar iframes já existentes do YouTube
+  const iframeYoutubeRegex = /<iframe(?:[^>]*?)\s+src="https?:\/\/(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})(?:\?[^"]*)?"\s+(?:[^>]*?)(?:title="([^"]*)")?(?:[^>]*?)><\/iframe>/gi;
+  
+  processedContent = processedContent.replace(iframeYoutubeRegex, (match, videoId, title) => {
+    if (!videoId) return match;
+    
+    return `<div class="youtube-player" data-videoid="${videoId}" data-title="${title || 'Vídeo do YouTube'}"></div>`;
+  });
+  
+  // 4. Processar iframes com parâmetros SI
+  const iframeWithSiRegex = /<iframe(?:[^>]*?)\s+src="https?:\/\/(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})\?si=[^"]+"\s+(?:[^>]*?)(?:title="([^"]*)")?(?:[^>]*?)><\/iframe>/gi;
+  
+  processedContent = processedContent.replace(iframeWithSiRegex, (match, videoId, title) => {
+    if (!videoId) return match;
+    
+    return `<div class="youtube-player" data-videoid="${videoId}" data-title="${title || 'Vídeo do YouTube'}"></div>`;
+  });
+  
+  return processedContent;
+};
+
+// Modal de submissão de conteúdo (extraído para fora do componente principal)
+const ContentSubmitModal: React.FC<ContentSubmitModalProps> = React.memo(({
+  show,
+  isSubmitting,
+  submitSuccess,
+  newContent,
+  onClose,
+  onSubmit,
+  onTitleChange,
+  onDescriptionChange,
+  onImageUrlChange,
+  onTagsChange,
+  onContentChange
+}) => {
+  if (!show) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+            <Send className="h-5 w-5 mr-2 text-emerald-500" />
+            Enviar Conteúdo para Aprovação
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        {/* Mensagem de sucesso */}
+        {submitSuccess && (
+          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg">
+            <p className="font-medium">Conteúdo enviado com sucesso!</p>
+            <p className="text-sm mt-1">Seu conteúdo foi recebido e está aguardando aprovação. Obrigado pela contribuição!</p>
+          </div>
+        )}
+        
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <input 
+              type="text" 
+              value={newContent.title || ''}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="Digite o título do seu conteúdo"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
+            <input 
+              type="text" 
+              value={newContent.description || ''}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="Digite uma breve descrição"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem (opcional)</label>
+            <input 
+              type="url"
+              value={newContent.image_url || ''}
+              onChange={(e) => onImageUrlChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="https://exemplo.com/imagem.jpg"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              URL da imagem de capa do conteúdo
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags (separadas por vírgula)</label>
+            <input 
+              type="text"
+              value={newContent.tags ? newContent.tags.join(', ') : ''}
+              onChange={(e) => onTagsChange(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              placeholder="marketing, copywriting, instagram"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo *</label>
+            <div className="border border-gray-300 rounded-lg">
+              <ReactQuill 
+                value={newContent.content || ''}
+                onChange={onContentChange}
+                className="min-h-[300px]"
+                theme="snow"
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'align': [] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['link', 'image', 'video'],
+                    ['blockquote', 'code-block'],
+                    ['clean']
+                  ],
+                }}
+                formats={[
+                  'header',
+                  'bold', 'italic', 'underline', 'strike',
+                  'list', 'bullet',
+                  'indent',
+                  'align',
+                  'color', 'background',
+                  'link', 'image', 'video',
+                  'blockquote', 'code-block'
+                ]}
+                style={{ height: '350px' }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Crie conteúdo rico com formatação, imagens e links para vídeos do YouTube
+            </p>
+            <div className="text-xs text-amber-600 mt-2">
+              <p>Dicas:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Cole links de YouTube diretamente para incorporar vídeos</li>
+                <li>Use os botões de formatação para melhorar a apresentação</li>
+                <li>Seu conteúdo será revisado por nossa equipe antes de ser publicado</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 mt-8">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={isSubmitting || !newContent.title || !newContent.description || !newContent.content}
+              className={`px-4 py-2 bg-emerald-600 text-white rounded-lg flex items-center ${
+                isSubmitting || !newContent.title || !newContent.description || !newContent.content
+                  ? 'opacity-70 cursor-not-allowed'
+                  : 'hover:bg-emerald-700'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <span>Enviando...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  <span>Enviar Conteúdo</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+});
 
 const FreeCourses = () => {
   const [contents, setContents] = useState<RelevantContent[]>([]);
@@ -32,6 +307,18 @@ const FreeCourses = () => {
   const location = useLocation();
   const { session } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  
+  // Estado para o modal de submissão de conteúdo
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [newContent, setNewContent] = useState<Partial<RelevantContent>>({
+    title: '',
+    description: '',
+    content: '',
+    image_url: '',
+    tags: []
+  });
   
   // Verificar parâmetros de URL para pré-visualização (apenas admin)
   useEffect(() => {
@@ -72,7 +359,7 @@ const FreeCourses = () => {
       
       const { data, error } = await supabase
         .from('relevant_contents')
-        .select('*')
+        .select('id, title, description, content, image_url, external_url, status, created_at, updated_at, author, tags, view_count, like_count')
         .eq('id', id)
         .single();
       
@@ -98,8 +385,8 @@ const FreeCourses = () => {
       // Para admin, mostrar todos os conteúdos
       // Para usuários normais, apenas conteúdos publicados
       const query = isAdmin 
-        ? supabase.from('relevant_contents').select('*').order('updated_at', { ascending: false })
-        : supabase.from('relevant_contents').select('*').eq('status', 'published').order('updated_at', { ascending: false });
+        ? supabase.from('relevant_contents').select('id, title, description, content, image_url, external_url, status, created_at, updated_at, author, tags, view_count, like_count').order('updated_at', { ascending: false })
+        : supabase.from('relevant_contents').select('id, title, description, content, image_url, external_url, status, created_at, updated_at, author, tags, view_count, like_count').eq('status', 'published').order('updated_at', { ascending: false });
       
       const { data, error } = await query;
       
@@ -147,6 +434,92 @@ const FreeCourses = () => {
       year: 'numeric'
     });
   };
+  
+  // Funções de tratamento de eventos memorizadas para o modal
+  const handleCloseModal = useCallback(() => {
+    setShowSubmitModal(false);
+  }, []);
+  
+  const handleTitleChange = useCallback((value: string) => {
+    setNewContent(prev => ({...prev, title: value}));
+  }, []);
+  
+  const handleDescriptionChange = useCallback((value: string) => {
+    setNewContent(prev => ({...prev, description: value}));
+  }, []);
+  
+  const handleImageUrlChange = useCallback((value: string) => {
+    setNewContent(prev => ({...prev, image_url: value}));
+  }, []);
+  
+  const handleTagsChange = useCallback((value: string) => {
+    setNewContent(prev => ({
+      ...prev, 
+      tags: value.split(',').map(tag => tag.trim()).filter(Boolean)
+    }));
+  }, []);
+  
+  const handleContentChange = useCallback((value: string) => {
+    setNewContent(prev => ({...prev, content: value}));
+  }, []);
+  
+  // Função para submeter um novo conteúdo
+  const handleContentSubmit = useCallback(async () => {
+    if (!session) {
+      alert('Você precisa estar logado para enviar conteúdo');
+      return;
+    }
+    
+    if (!newContent.title || !newContent.description || !newContent.content) {
+      alert('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Obter nome do usuário diretamente da sessão ou usar o email
+      const authorName = session.user.user_metadata?.full_name || session.user.email;
+      
+      // Inserir o conteúdo com status 'draft' (ao invés de 'pending' que não é suportado pelo banco)
+      const { data, error } = await supabase
+        .from('relevant_contents')
+        .insert([
+          {
+            title: newContent.title,
+            description: newContent.description,
+            content: newContent.content,
+            image_url: newContent.image_url || '',
+            status: 'draft', // Usando 'draft' em vez de 'pending'
+            author: authorName,
+            tags: newContent.tags || []
+          }
+        ]);
+      
+      if (error) throw error;
+      
+      // Resetar o formulário e mostrar mensagem de sucesso
+      setNewContent({
+        title: '',
+        description: '',
+        content: '',
+        image_url: '',
+        tags: []
+      });
+      
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        setSubmitSuccess(false);
+        setShowSubmitModal(false);
+      }, 3000);
+      
+    } catch (err) {
+      console.error('Erro ao enviar conteúdo:', err);
+      alert(`Ocorreu um erro ao enviar seu conteúdo. Por favor, tente novamente.`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [newContent, session]);
   
   // Renderizar a visualização detalhada de um conteúdo
   if (selectedContent) {
@@ -219,7 +592,8 @@ const FreeCourses = () => {
                   alt={selectedContent.title}
                   className="w-full h-48 sm:h-56 md:h-64 object-cover hover:scale-105 transition-transform duration-700"
                   onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/1200x400?text=Imagem+Indisponível";
+                    e.currentTarget.src = ERROR_IMAGE_PLACEHOLDER;
+                    e.currentTarget.onerror = null; // Impedir loop infinito de erros
                   }}
                 />
               </div>
@@ -274,7 +648,7 @@ const FreeCourses = () => {
             </p>
           </div>
           
-          {/* Conteúdo HTML com imagens clicáveis */}
+          {/* Conteúdo HTML com players de YouTube e imagens clicáveis */}
           <div className="prose prose-emerald lg:prose-lg max-w-none 
             prose-headings:text-emerald-800 prose-headings:font-semibold prose-headings:mt-8 prose-headings:mb-4
             prose-h1:text-3xl prose-h1:font-bold prose-h1:bg-gradient-to-r prose-h1:from-emerald-600 prose-h1:to-teal-500 prose-h1:bg-clip-text prose-h1:text-transparent
@@ -298,10 +672,12 @@ const FreeCourses = () => {
             prose-td:py-2 prose-td:px-4 prose-td:border prose-td:border-emerald-200"
           >
             <div 
-              dangerouslySetInnerHTML={{ __html: selectedContent.content }} 
+              // Processar o conteúdo para transformar links do YouTube em players
+              dangerouslySetInnerHTML={{ __html: processYouTubeLinks(selectedContent.content) }} 
               ref={(node) => {
                 // Adicionar evento de clique para todas as imagens após a renderização
                 if (node) {
+                  // Processar imagens (código existente)
                   const images = node.querySelectorAll('img');
                   images.forEach(img => {
                     img.addEventListener('click', () => {
@@ -309,6 +685,89 @@ const FreeCourses = () => {
                     });
                     // Adicionar classes para manter o estilo existente
                     img.classList.add('rounded-lg', 'my-8', 'mx-auto', 'shadow-md', 'cursor-pointer', 'transition-transform', 'hover:scale-[1.02]');
+                  });
+                  
+                  // Renderizar players do YouTube
+                  const youtubePlayers = node.querySelectorAll('.youtube-player');
+                  youtubePlayers.forEach(playerDiv => {
+                    const videoId = playerDiv.getAttribute('data-videoid');
+                    const title = playerDiv.getAttribute('data-title') || 'Vídeo do YouTube';
+                    if (videoId) {
+                      // Criar elemento do player
+                      const playerContainer = document.createElement('div');
+                      playerContainer.className = 'my-8';
+                      
+                      const aspectRatioContainer = document.createElement('div');
+                      aspectRatioContainer.className = 'relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg';
+                      
+                      const iframe = document.createElement('iframe');
+                      iframe.className = 'absolute top-0 left-0 w-full h-full';
+                      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+                      iframe.title = title;
+                      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                      iframe.allowFullscreen = true;
+                      
+                      const caption = document.createElement('p');
+                      caption.className = 'text-sm text-gray-500 mt-2 text-center';
+                      caption.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 mr-1 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Vídeo do YouTube: ${title}`;
+                      
+                      aspectRatioContainer.appendChild(iframe);
+                      playerContainer.appendChild(aspectRatioContainer);
+                      playerContainer.appendChild(caption);
+                      
+                      // Substituir o div placeholder pelo player real
+                      playerDiv.parentNode?.replaceChild(playerContainer, playerDiv);
+                    }
+                  });
+                  
+                  // Procurar por links regulares de YouTube no texto também
+                  const paragraphs = node.querySelectorAll('p');
+                  paragraphs.forEach(paragraph => {
+                    const paragraphContent = paragraph.innerHTML;
+                    const youtubeRegex = /https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})(?:[^\s<]*)|https?:\/\/(www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})(?:[^\s<]*)/g;
+                    
+                    let match;
+                    let foundYoutubeLinks = false;
+                    while ((match = youtubeRegex.exec(paragraphContent)) !== null) {
+                      foundYoutubeLinks = true;
+                      const url = match[0];
+                      const videoId = match[2] || match[4];
+                      
+                      if (videoId) {
+                        // Criar elemento do player
+                        const playerContainer = document.createElement('div');
+                        playerContainer.className = 'my-8';
+                        
+                        const aspectRatioContainer = document.createElement('div');
+                        aspectRatioContainer.className = 'relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg';
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.className = 'absolute top-0 left-0 w-full h-full';
+                        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+                        iframe.title = 'Vídeo do YouTube';
+                        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                        iframe.allowFullscreen = true;
+                        
+                        const caption = document.createElement('p');
+                        caption.className = 'text-sm text-gray-500 mt-2 text-center';
+                        caption.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-4 h-4 mr-1 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Vídeo do YouTube`;
+                        
+                        aspectRatioContainer.appendChild(iframe);
+                        playerContainer.appendChild(aspectRatioContainer);
+                        playerContainer.appendChild(caption);
+                        
+                        // Substituir o link pelo player real
+                        paragraph.innerHTML = paragraph.innerHTML.replace(url, '');
+                        
+                        // Inserir o player depois do parágrafo
+                        paragraph.parentNode?.insertBefore(playerContainer, paragraph.nextSibling);
+                      }
+                    }
+                    
+                    // Se o parágrafo ficar vazio após remover os links, oculte-o
+                    if (foundYoutubeLinks && paragraph.innerText.trim() === '') {
+                      paragraph.style.display = 'none';
+                    }
                   });
                 }
               }}
@@ -368,6 +827,35 @@ const FreeCourses = () => {
         </div>
       </motion.div>
 
+      {/* Botão flutuante para enviar conteúdo */}
+      {session && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          onClick={() => setShowSubmitModal(true)}
+          className="fixed bottom-6 right-6 bg-emerald-600 text-white rounded-full p-4 shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center"
+          title="Enviar meu conteúdo"
+        >
+          <Plus className="h-6 w-6" />
+        </motion.button>
+      )}
+      
+      {/* Modal de submissão de conteúdo */}
+      <ContentSubmitModal 
+        show={showSubmitModal}
+        isSubmitting={isSubmitting}
+        submitSuccess={submitSuccess}
+        newContent={newContent}
+        onClose={handleCloseModal}
+        onSubmit={handleContentSubmit}
+        onTitleChange={handleTitleChange}
+        onDescriptionChange={handleDescriptionChange}
+        onImageUrlChange={handleImageUrlChange}
+        onTagsChange={handleTagsChange}
+        onContentChange={handleContentChange}
+      />
+      
       {/* Estado de carregamento */}
       {isLoading && (
         <div className="flex justify-center items-center py-12">
@@ -393,6 +881,15 @@ const FreeCourses = () => {
               ? `Não encontramos resultados para "${searchTerm}". Tente outros termos de busca.`
               : 'Ainda não há conteúdos disponíveis nesta seção. Volte em breve!'}
           </p>
+          {session && (
+            <button
+              onClick={() => setShowSubmitModal(true)}
+              className="mt-8 px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition-colors inline-flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              <span>Enviar Meu Conteúdo</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -416,11 +913,12 @@ const FreeCourses = () => {
                 {/* Imagem */}
                 <div className="md:col-span-4 relative aspect-[4/3] overflow-hidden">
                   <img 
-                    src={content.image_url || "https://via.placeholder.com/800x600?text=Sem+Imagem"} 
+                    src={content.image_url || DEFAULT_IMAGE_PLACEHOLDER} 
                     alt={content.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/800x600?text=Imagem+Indisponível";
+                      e.currentTarget.src = ERROR_IMAGE_PLACEHOLDER;
+                      e.currentTarget.onerror = null; // Impedir loop infinito de erros
                     }}
                   />
                   {/* Badge de status para admin */}

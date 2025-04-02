@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Se falhar, tentar o método padrão
             const { data: standardData, error: standardError } = await supabase
               .from('profiles')
-              .select('*')
+              .select('id, nome, email, avatar_url, cover_url, data_criacao, data_modificacao, status, plano, ultimo_login, verificado, role, tentativas_login, banido, notificacoes_ativas, whatsapp')
               .eq('id', user.id)
               .single();
               
@@ -175,7 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Buscar dados do perfil
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, nome, email, avatar_url, cover_url, data_criacao, data_modificacao, status, plano, ultimo_login, verificado, role, tentativas_login, banido, notificacoes_ativas, whatsapp')
         .eq('id', session.user.id)
         .single();
         

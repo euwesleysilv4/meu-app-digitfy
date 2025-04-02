@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Configuração do cliente Supabase
-// Definir as variáveis de URL e chave diretamente se não puder acessar via env
-const supabaseUrl = 'https://ghufctqxevwaszzpfkym.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodWZjdHF4ZXZ3YXN6enBma3ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxMjQyMTMsImV4cCI6MjA1NzcwMDIxM30.LPR4CrQKjF5fO0TC_cJl71jBJZcDQuxUgNFCvxxUwXg';
+// Obter as variáveis de ambiente
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Verificar se as variáveis estão definidas
 if (!supabaseUrl || !supabaseKey) {
@@ -17,7 +17,25 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: {
+      // Usar cookies em vez de localStorage
+      getItem: (key) => {
+        // Acessa os cookies diretamente, pois HTTP-only cookies não são acessíveis via JavaScript
+        return document.cookie
+          .split('; ')
+          .find(row => row.startsWith(`${key}=`))
+          ?.split('=')[1] || null;
+      },
+      setItem: (key, value) => {
+        // Define um cookie com atributos de segurança
+        document.cookie = `${key}=${value}; path=/; max-age=2592000; SameSite=Strict; Secure`;
+      },
+      removeItem: (key) => {
+        // Remove o cookie definindo uma data de expiração no passado
+        document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict; Secure`;
+      }
+    }
   }
 });
 
@@ -273,16 +291,8 @@ export const auth = {
       
       console.log('Supabase: Logout bem-sucedido');
 
-      // Limpar qualquer estado persistente
-      try {
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem('supabase.auth.expires_at');
-        localStorage.removeItem('supabase.auth.refresh_token');
-        sessionStorage.clear();
-        console.log('Supabase: Armazenamento local limpo');
-      } catch (e) {
-        console.error('Supabase: Erro ao limpar armazenamento local:', e);
-      }
+      // Cookies e sessão são gerenciados pelo Supabase, não precisamos limpar manualmente
+      // Os cookies serão limpos pelo mecanismo de storage que configuramos
 
       return { error: null };
     } catch (error) {
@@ -332,7 +342,7 @@ export const auth = {
         // Buscar dados do perfil
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, nome, email, avatar_url, cover_url, data_criacao, data_modificacao, status, plano, ultimo_login, verificado, role, tentativas_login, banido, notificacoes_ativas, whatsapp')
           .eq('id', user.id)
           .single();
           
@@ -356,7 +366,7 @@ export const profiles = {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, nome, email, avatar_url, cover_url, data_criacao, data_modificacao, status, plano, ultimo_login, verificado, role, notificacoes_ativas, whatsapp')
         .eq('id', userId)
         .single();
 

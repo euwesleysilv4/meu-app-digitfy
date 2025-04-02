@@ -86,6 +86,7 @@ import AffiliateVideos from './pages/admin/AffiliateVideos';
 
 // Lazy load dos novos componentes
 const DashboardTrendRush = lazy(() => import('./pages/dashboard/tools/trend-rush'));
+const DashboardTools = lazy(() => import('./pages/dashboard/tools'));
 const AffiliateProductsAdmin = lazy(() => import('../app/admin/affiliate-products/AffiliateProductsAdmin'));
 
 // Imports temporários para as páginas que ainda serão criadas
@@ -466,7 +467,13 @@ function App() {
           <Route path="news" element={<News />} />
           <Route path="news/suggestions" element={<Suggestions />} />
           <Route path="news/report-issue" element={<ReportIssue />} />
-          <Route path="tools" element={<Tools />} />
+          <Route path="tools" element={
+            <FeatureGate featureKey="tools">
+              <Suspense fallback={<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div></div>}>
+                <DashboardTools />
+              </Suspense>
+            </FeatureGate>
+          } />
           <Route path="links" element={<Links />} />
           <Route path="members" element={<Members />} />
           <Route path="help" element={<Help />} />
