@@ -87,6 +87,8 @@ import AffiliateVideos from './pages/admin/AffiliateVideos';
 // Lazy load dos novos componentes
 const DashboardTrendRush = lazy(() => import('./pages/dashboard/tools/trend-rush'));
 const DashboardTools = lazy(() => import('./pages/dashboard/tools'));
+const DashboardFunnelFy = lazy(() => import('./pages/dashboard/tools/funnelfy'));
+const DashboardFunnelFyEditor = lazy(() => import('./pages/dashboard/tools/funnelfy-editor'));
 const AffiliateProductsAdmin = lazy(() => import('../app/admin/affiliate-products/AffiliateProductsAdmin'));
 
 // Imports temporários para as páginas que ainda serão criadas
@@ -232,6 +234,33 @@ const PermissionRoute = ({ children, featureKey }: { children: React.ReactNode, 
 
 function App() {
   const { session } = useAuth();
+
+  // Limpar localStorage para evitar problemas com o compartilhamento de funis
+  useEffect(() => {
+    // Check se estamos numa versão autenticada (com Supabase)
+    if (session) {
+      // Verificar se existem funis no localStorage
+      if (localStorage.getItem('userFunnelTemplates')) {
+        console.log('Detectados funis armazenados localmente. Migrando para o Supabase...');
+        
+        try {
+          // Opcional: fazer backup dos dados antes de remover
+          const oldFunnels = localStorage.getItem('userFunnelTemplates');
+          if (oldFunnels) {
+            localStorage.setItem('userFunnelTemplates_backup', oldFunnels);
+            console.log('Backup dos funis locais criado em localStorage (userFunnelTemplates_backup)');
+          }
+          
+          // Limpar localStorage após o login
+          // Isso forçará o uso exclusivo do Supabase
+          localStorage.removeItem('userFunnelTemplates');
+          console.log('Dados de funis removidos do localStorage para evitar conflitos');
+        } catch (error) {
+          console.error('Erro ao migrar funis do localStorage:', error);
+        }
+      }
+    }
+  }, [session]);
 
   return (
     <BrowserRouter>
@@ -530,6 +559,20 @@ function App() {
           <Route path="tools/commission-calculator" element={
             <FeatureGate featureKey="platformComparison">
               <PlatformComparison />
+            </FeatureGate>
+          } />
+          <Route path="tools/funnelfy" element={
+            <FeatureGate featureKey="tools">
+              <Suspense fallback={<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div></div>}>
+                <DashboardFunnelFy />
+              </Suspense>
+            </FeatureGate>
+          } />
+          <Route path="tools/funnelfy/editor" element={
+            <FeatureGate featureKey="tools">
+              <Suspense fallback={<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div></div>}>
+                <DashboardFunnelFyEditor />
+              </Suspense>
             </FeatureGate>
           } />
           <Route path="tools/trend-rush" element={

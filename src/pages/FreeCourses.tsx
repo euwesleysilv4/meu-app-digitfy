@@ -809,9 +809,9 @@ const FreeCourses = () => {
             initial={{ x: 20 }}
             animate={{ x: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex justify-end"
+            className="flex justify-end items-center gap-3"
           >
-            <div className="relative max-w-md w-full">
+            <div className="relative flex-1 max-w-md">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="w-5 h-5 text-gray-400" />
               </div>
@@ -823,24 +823,23 @@ const FreeCourses = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
             </div>
+            {session && (
+              <motion.button
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                onClick={() => setShowSubmitModal(true)}
+                className="whitespace-nowrap py-2 px-4 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition-colors flex items-center"
+                title="Enviar meu conteúdo"
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                <span>Enviar Conteúdo</span>
+              </motion.button>
+            )}
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Botão flutuante para enviar conteúdo */}
-      {session && (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          onClick={() => setShowSubmitModal(true)}
-          className="fixed bottom-6 right-6 bg-emerald-600 text-white rounded-full p-4 shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center"
-          title="Enviar meu conteúdo"
-        >
-          <Plus className="h-6 w-6" />
-        </motion.button>
-      )}
-      
       {/* Modal de submissão de conteúdo */}
       <ContentSubmitModal 
         show={showSubmitModal}

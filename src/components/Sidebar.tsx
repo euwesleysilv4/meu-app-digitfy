@@ -197,7 +197,7 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
   };
 
   // Componente para os itens do submenu
-  const SubMenuItem = ({ to, label, disabled = false }: { to: string; label: string; disabled?: boolean }) => {
+  const SubMenuItem = ({ to, label, disabled = false }: { to: string; label: React.ReactNode; disabled?: boolean }) => {
     const active = isActive(to);
     
     // Determinar se o item deve ser clicável ou não para usuários não logados
@@ -210,7 +210,7 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
         ${active ? 'bg-emerald-100 text-emerald-600' : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'}
         ${disabled || !isClickable ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
       `}>
-        <span>{label}</span>
+        {label}
       </div>
     );
     
@@ -325,6 +325,16 @@ const Sidebar = ({ isOpen, setIsOpen, isSidebarOpen, setIsSidebarOpen }: Sidebar
               {activeDropdown === 'tools' && (
                 <div className="pl-8 mt-1 space-y-1">
                   <SubMenuItem to="/tools/trend-rush" label="Trend Rush" disabled={!session} />
+                  <SubMenuItem 
+                    to="/tools/funnelfy" 
+                    label={
+                      <div className="flex items-center">
+                        <span>Funnel Builder</span>
+                        <span className="ml-2 bg-emerald-400 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">BETA</span>
+                      </div>
+                    } 
+                    disabled={!session} 
+                  />
                   <SubMenuItem to="/whatsapp-generator" label="Gerador de Link WhatsApp" disabled={!session} />
                   <SubMenuItem to="/profile-structure-generator" label="Gerador de Estrutura de Perfil" disabled={!session} />
                   <SubMenuItem to="/hashtag-generator" label="Gerador de Hashtags" disabled={!session} />
